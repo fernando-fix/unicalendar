@@ -2,11 +2,22 @@
 
 Calendários compartilhados para estudantes. Crie calendários, compartilhe links, organize eventos com seu grupo.
 
-![Dashboard](https://github.com/user-uniCalendar/dashboard.png)
+## Sobre
 
-## Demo
+Cansou de perguntar no grupo "quando é a prova?" ou "qual o prazo do trabalho?" O UniCalendar resolve isso. Cria um calendário, manda o link no WhatsApp, e todo mundo visualiza os eventos. Sem complicação.
 
-Acesse [unicalendar.app](http://unicalendar.app) (em breve)
+## Funcionalidades
+
+- **Calendários compartilhados** — crie calendários públicos ou privados e compartilhe por link
+- **Eventos** — crie com tipo (prova, reunião, prazo, apresentação), data, local e link de reunião
+- **Presença (RSVP)** — confirme presença: vou participar, talvez ou não vou
+- **Comentários** — comente nos eventos pra tirar dúvidas
+- **Importar ICS** — importe calendários do Google Calendar, Outlook ou Apple Calendar
+- **Notificações por email** — lembretes antes dos eventos
+- **Foto de perfil** — upload e gerenciamento de avatar
+- **Dark mode** — toggle com persistência
+- **Calendário unificado** — visualização de todos os seus eventos em um grid
+- **Filtros e paginação** — filtre por tipo de evento
 
 ## Stack
 
@@ -20,7 +31,7 @@ Acesse [unicalendar.app](http://unicalendar.app) (em breve)
 
 ### Pré-requisitos
 
-- [PHP 8.3+](https://www.php.net/downloads) (com extensões: mbstring, pdo_sqlite, gd, openssl, tokenizer, fileinfo)
+- [PHP 8.3+](https://www.php.net/downloads) (extensões: mbstring, pdo_sqlite, gd, openssl, tokenizer, fileinfo)
 - [Composer](https://getcomposer.org/)
 - [Node.js 18+](https://nodejs.org/) e npm
 
@@ -28,7 +39,7 @@ Acesse [unicalendar.app](http://unicalendar.app) (em breve)
 
 ```bash
 # Clonar
-git clone https://github.com/seu-usuario/unicalendar.git
+git clone https://github.com/fernando-fix/unicalendar.git
 cd unicalendar
 
 # Instalar dependências
@@ -67,20 +78,6 @@ Acesse **http://localhost:8000**
 | Ana Silva | ana@example.com | password |
 | Bruno Costa | bruno@example.com | password |
 | Carlos Mendes | carlos@example.com | password |
-
-## Funcionalidades
-
-- **Calendários compartilhados** — crie, edite, delete calendários públicos ou privados
-- **Eventos** — criar, editar, excluir com tipo, data, local e link de reunião
-- **Presença (RSVP)** — confirme presença, talvez ou não vou
-- **Comentários** — comente nos eventos
-- **Importar ICS** — importe calendários do Google Calendar, Outlook ou Apple Calendar
-- **Notificações por email** — lembretes e alertas de eventos
-- **Foto de perfil** — upload e gerenciamento de avatar
-- **Dark mode** — toggle com persistência
-- **Calendário unificado** — visualização de todos os eventos em um grid
-- **Filtros** — filtre eventos por tipo
-- **Paginação** — sidebar com paginação de eventos
 
 ## Testes
 
