@@ -17,6 +17,7 @@ class StoreCalendarRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'visibility' => ['required', 'in:public,private'],
+            'color' => ['sometimes', 'string', 'in:blue,emerald,purple,amber,rose,cyan,orange,indigo'],
         ];
     }
 }

@@ -14,9 +14,10 @@ export type Calendar = {
     id: number;
     owner_id: number;
     name: string;
-    slug: string;
+    uuid: string;
     description: string | null;
     visibility: 'public' | 'private';
+    color: string;
     allow_member_event_creation: boolean;
     created_at: string;
     updated_at: string;
@@ -25,12 +26,26 @@ export type Calendar = {
     events?: Event[];
     upcoming_events_count?: number;
     members_count?: number;
+    pending_requests_count?: number;
 };
 
 export type CalendarMember = User & {
     pivot: {
         role: 'owner' | 'member';
     };
+};
+
+export type CalendarJoinRequest = {
+    id: number;
+    calendar_id: number;
+    user_id: number;
+    status: 'pending' | 'approved' | 'rejected';
+    reviewed_by: number | null;
+    reviewed_at: string | null;
+    created_at: string;
+    updated_at: string;
+    user?: User;
+    reviewer?: User;
 };
 
 export type Event = {
@@ -106,5 +121,6 @@ export type SharedData = {
         user: User;
     };
     sidebarOpen: boolean;
+    totalPendingRequests: number;
     [key: string]: unknown;
 };

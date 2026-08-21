@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,21 +10,24 @@ import {
     CardContent,
     CardFooter,
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CALENDAR_COLORS } from '@/components/calendar-color-picker';
 import {
     CalendarIcon,
     PlusIcon,
     UsersIcon,
     CalendarClockIcon,
     UploadIcon,
+    SettingsIcon,
 } from 'lucide-react';
-import type { Calendar } from '@/types';
+import type { Calendar, SharedData } from '@/types';
 
 type CalendarsListProps = {
     ownedCalendars: Calendar[];
     memberCalendars: Calendar[];
 };
 
-function CalendarCard({ calendar }: { calendar: Calendar }) {
+function CalendarCard({ calendar, isOwner }: { calendar: Calendar; isOwner: boolean }) {
     const ownerInitials = calendar.owner?.name
         ?.split(' ')
         .map((n: string) => n[0])
@@ -32,23 +35,30 @@ function CalendarCard({ calendar }: { calendar: Calendar }) {
         .toUpperCase()
         .slice(0, 2) ?? '??';
 
+    const colorClass = CALENDAR_COLORS.find((c) => c.name === calendar.color)?.bg ?? 'bg-blue-500';
+
     return (
-        <Card>
+        <Card className="flex flex-col">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <CalendarIcon className="size-4 text-muted-foreground" />
+                    <span className={`size-3 rounded-full ${colorClass}`} />
                     <Link
-                        href={`/calendar/${calendar.slug}`}
+                        href={`/calendar/${calendar.uuid}`}
                         className="hover:underline"
                     >
                         {calendar.name}
                     </Link>
+                    {isOwner && (calendar.pending_requests_count ?? 0) > 0 && (
+                        <Badge variant="destructive" className="h-5 min-w-5 rounded-full px-1 text-xs bg-red-500 text-white dark:bg-red-600">
+                            {calendar.pending_requests_count}
+                        </Badge>
+                    )}
                 </CardTitle>
                 {calendar.description && (
                     <CardDescription>{calendar.description}</CardDescription>
                 )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1">
                 <div className="flex items-center justify-between">
                     <div className="flex gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -68,20 +78,33 @@ function CalendarCard({ calendar }: { calendar: Calendar }) {
                     )}
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    render={<Link href={`/calendar/${calendar.slug}`} />}
+                    nativeButton={false}
+                    render={<Link href={`/calendar/${calendar.uuid}`} />}
                 >
                     Abrir
                 </Button>
+                {isOwner && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        nativeButton={false}
+                        render={<Link href={`/calendar/${calendar.uuid}/settings`} />}
+                    >
+                        <SettingsIcon className="size-4" />
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     );
 }
 
 export default function CalendarsList({ ownedCalendars, memberCalendars }: CalendarsListProps) {
+    const { auth } = usePage<SharedData>().props;
+
     return (
         <AppLayout>
             <Head title="Meus Calendários" />
@@ -89,11 +112,11 @@ export default function CalendarsList({ ownedCalendars, memberCalendars }: Calen
             <div className="flex items-center justify-between mb-8">
                 <h1 className="text-2xl font-bold">Meus Calendários</h1>
                 <div className="flex gap-2">
-                    <Button variant="outline" render={<Link href="/calendar/import" />}>
+                    <Button variant="outline" nativeButton={false} render={<Link href="/calendar/import" />}>
                         <UploadIcon className="size-4" />
                         Importar ICS
                     </Button>
-                    <Button render={<Link href="/calendar/create" />}>
+                    <Button nativeButton={false} render={<Link href="/calendar/create" />}>
                         <PlusIcon className="size-4" />
                         Novo Calendário
                     </Button>
@@ -113,6 +136,7 @@ export default function CalendarsList({ ownedCalendars, memberCalendars }: Calen
                                 variant="outline"
                                 size="sm"
                                 className="mt-3"
+                                nativeButton={false}
                                 render={<Link href="/calendar/create" />}
                             >
                                 Criar primeiro calendário
@@ -121,7 +145,7 @@ export default function CalendarsList({ ownedCalendars, memberCalendars }: Calen
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {ownedCalendars.map((calendar) => (
-                                <CalendarCard key={calendar.id} calendar={calendar} />
+                                <CalendarCard key={calendar.id} calendar={calendar} isOwner={calendar.owner_id === auth.user?.id} />
                             ))}
                         </div>
                     )}
@@ -139,7 +163,7 @@ export default function CalendarsList({ ownedCalendars, memberCalendars }: Calen
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {memberCalendars.map((calendar) => (
-                                <CalendarCard key={calendar.id} calendar={calendar} />
+                                <CalendarCard key={calendar.id} calendar={calendar} isOwner={calendar.owner_id === auth.user?.id} />
                             ))}
                         </div>
                     )}

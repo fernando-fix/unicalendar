@@ -5,7 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import CalendarColorPicker from '@/components/calendar-color-picker';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,29 +20,46 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeftIcon, TrashIcon } from 'lucide-react';
-import type { Calendar } from '@/types';
+import { ArrowLeftIcon, TrashIcon, CheckIcon, XIcon, UsersIcon } from 'lucide-react';
+import type { Calendar, CalendarJoinRequest, CalendarMember } from '@/types';
 
 type CalendarSettingsProps = {
     calendar: Calendar;
+    pendingRequests: CalendarJoinRequest[];
+    members: CalendarMember[];
 };
 
-export default function CalendarSettings({ calendar }: CalendarSettingsProps) {
+export default function CalendarSettings({ calendar, pendingRequests, members }: CalendarSettingsProps) {
     const { data, setData, put, processing, errors } = useForm({
         name: calendar.name,
         description: calendar.description ?? '',
         visibility: calendar.visibility,
+        color: calendar.color ?? 'blue',
         allow_member_event_creation: calendar.allow_member_event_creation,
     });
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        put(`/calendar/${calendar.slug}/settings`);
+        put(`/calendar/${calendar.uuid}/settings`);
     }
 
     function handleDelete() {
-        router.delete(`/calendar/${calendar.slug}`);
+        router.delete(`/calendar/${calendar.uuid}`);
     }
+
+    function handleApprove(requestId: number) {
+        router.put(`/calendar/${calendar.uuid}/requests/${requestId}/approve`);
+    }
+
+    function handleReject(requestId: number) {
+        router.put(`/calendar/${calendar.uuid}/requests/${requestId}/reject`);
+    }
+
+    function handleRemoveMember(userId: number) {
+        router.delete(`/calendar/${calendar.uuid}/members/${userId}`);
+    }
+
+    const nonOwnerMembers = members.filter((m) => m.pivot?.role !== 'owner');
 
     return (
         <AppLayout>
@@ -47,7 +67,7 @@ export default function CalendarSettings({ calendar }: CalendarSettingsProps) {
 
             <div className="mx-auto max-w-xl">
                 <Link
-                    href={`/calendar/${calendar.slug}`}
+                    href={`/calendar/${calendar.uuid}`}
                     className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
                 >
                     <ArrowLeftIcon className="size-4" />
@@ -100,6 +120,11 @@ export default function CalendarSettings({ calendar }: CalendarSettingsProps) {
                         )}
                     </div>
 
+                    <CalendarColorPicker
+                        value={data.color}
+                        onChange={(color) => setData('color', color)}
+                    />
+
                     <div className="flex items-center gap-3">
                         <Checkbox
                             id="allow_member_event_creation"
@@ -122,6 +147,145 @@ export default function CalendarSettings({ calendar }: CalendarSettingsProps) {
                         {processing ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </form>
+
+                {/* Pending Requests */}
+                {pendingRequests.length > 0 && (
+                    <>
+                        <Separator className="my-8" />
+
+                        <div className="space-y-4">
+                            <h2 className="text-lg font-semibold">
+                                Solicitações pendentes ({pendingRequests.length})
+                            </h2>
+                            <div className="space-y-3">
+                                {pendingRequests.map((request) => (
+                                    <div
+                                        key={request.id}
+                                        className="flex items-center justify-between rounded-lg border p-3"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="size-8">
+                                                <AvatarImage
+                                                    src={request.user?.avatar ? `/storage/${request.user.avatar}` : undefined}
+                                                    alt={request.user?.name}
+                                                />
+                                                <AvatarFallback className="text-xs">
+                                                    {request.user?.name
+                                                        ?.split(' ')
+                                                        .map((n: string) => n[0])
+                                                        .join('')
+                                                        .toUpperCase()
+                                                        .slice(0, 2) ?? '??'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="text-sm font-medium">{request.user?.name}</p>
+                                                <p className="text-xs text-muted-foreground">{request.user?.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleApprove(request.id)}
+                                            >
+                                                <CheckIcon className="size-4" />
+                                                Aprovar
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleReject(request.id)}
+                                            >
+                                                <XIcon className="size-4" />
+                                                Rejeitar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {/* Members */}
+                <Separator className="my-8" />
+
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                            <UsersIcon className="size-5" />
+                            Membros ({members.length})
+                        </h2>
+                    </div>
+
+                    <div className="space-y-3">
+                        {members.map((member) => {
+                            const isOwner = member.pivot?.role === 'owner';
+                            return (
+                                <div
+                                    key={member.id}
+                                    className="flex items-center justify-between rounded-lg border p-3"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="size-8">
+                                            <AvatarImage
+                                                src={member.avatar ? `/storage/${member.avatar}` : undefined}
+                                                alt={member.name}
+                                            />
+                                            <AvatarFallback className="text-xs">
+                                                {member.name
+                                                    ?.split(' ')
+                                                    .map((n: string) => n[0])
+                                                    .join('')
+                                                    .toUpperCase()
+                                                    .slice(0, 2) ?? '??'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-medium">{member.name}</p>
+                                                {isOwner && (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        Owner
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">{member.email}</p>
+                                        </div>
+                                    </div>
+                                    {!isOwner && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger
+                                                render={
+                                                    <Button variant="outline" size="sm" />
+                                                }
+                                            >
+                                                <TrashIcon className="size-4" />
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Tem certeza que deseja remover {member.name} do calendário?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        variant="destructive"
+                                                        onClick={() => handleRemoveMember(member.id)}
+                                                    >
+                                                        Remover
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 <Separator className="my-8" />
 

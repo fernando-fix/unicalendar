@@ -6,6 +6,7 @@ use App\Enums\CalendarRole;
 use App\Http\Requests\StoreCalendarRequest;
 use App\Http\Requests\UpdateCalendarRequest;
 use App\Models\Calendar;
+use App\Models\CalendarJoinRequest;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -26,30 +27,48 @@ class CalendarController extends Controller
             'slug' => Calendar::generateUniqueSlug($request->name),
             'description' => $request->description,
             'visibility' => $request->visibility,
+            'color' => $request->color ?? 'blue',
         ]);
 
         $calendar->members()->attach($user->id, ['role' => CalendarRole::Owner->value]);
 
-        return redirect()->route('calendars.show', $calendar->slug);
+        return redirect()->route('calendars.show', $calendar->uuid);
     }
 
     public function show(Calendar $calendar)
     {
-        if (! $calendar->isPublic()) {
-            $user = Auth::user();
+        $user = Auth::user();
+        $isMember = $user !== null && $calendar->hasMember($user);
 
-            if ($user === null || ! $calendar->hasMember($user)) {
-                abort(403);
-            }
+        $calendar->load(['owner']);
+
+        $pendingRequest = null;
+        if ($user !== null) {
+            $pendingRequest = CalendarJoinRequest::where('calendar_id', $calendar->id)
+                ->where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->first();
         }
 
-        $calendar->load(['owner', 'members']);
+        if (! $calendar->isPublic() && ! $isMember) {
+            $pendingRequestsCount = $calendar->joinRequests()->where('status', 'pending')->count();
+
+            return Inertia::render('calendar/show', [
+                'calendar' => $calendar,
+                'events' => [],
+                'upcomingEvents' => [],
+                'isMember' => false,
+                'userRole' => null,
+                'pendingRequest' => $pendingRequest,
+                'pendingRequestsCount' => $pendingRequestsCount,
+            ]);
+        }
+
+        $calendar->load(['members']);
         $calendar->load(['events' => function ($query) {
             $query->with(['creator', 'attendees'])->orderBy('start_at');
         }]);
 
-        $user = Auth::user();
-        $isMember = $user !== null && $calendar->hasMember($user);
         $userRole = $isMember ? $calendar->getMemberRole($user) : null;
 
         $upcomingEvents = $calendar->events()
@@ -58,12 +77,16 @@ class CalendarController extends Controller
             ->orderBy('start_at')
             ->get();
 
+        $pendingRequestsCount = $calendar->joinRequests()->where('status', 'pending')->count();
+
         return Inertia::render('calendar/show', [
             'calendar' => $calendar,
             'events' => $calendar->events,
             'upcomingEvents' => $upcomingEvents,
             'isMember' => $isMember,
             'userRole' => $userRole,
+            'pendingRequest' => $pendingRequest,
+            'pendingRequestsCount' => $pendingRequestsCount,
         ]);
     }
 

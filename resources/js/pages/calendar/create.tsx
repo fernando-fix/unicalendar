@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import CalendarColorPicker from '@/components/calendar-color-picker';
 import { ArrowLeftIcon } from 'lucide-react';
 
 export default function CalendarCreate() {
@@ -11,6 +12,7 @@ export default function CalendarCreate() {
         name: '',
         description: '',
         visibility: 'public' as 'public' | 'private',
+        color: 'blue',
     });
 
     function handleSubmit(e: React.FormEvent) {
@@ -79,6 +81,11 @@ export default function CalendarCreate() {
                         )}
                     </div>
 
+                    <CalendarColorPicker
+                        value={data.color}
+                        onChange={(color) => setData('color', color)}
+                    />
+
                     <div className="flex gap-3">
                         <Button type="submit" disabled={processing}>
                             {processing ? 'Criando...' : 'Criar Calendário'}
@@ -86,6 +93,7 @@ export default function CalendarCreate() {
                         <Button
                             variant="outline"
                             type="button"
+                            nativeButton={false}
                             render={<Link href="/dashboard" />}
                         >
                             Cancelar

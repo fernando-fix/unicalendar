@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
  * @property int $owner_id
  * @property string $name
  * @property string $slug
+ * @property string $uuid
  * @property string|null $description
  * @property 'public'|'private' $visibility
  * @property bool $allow_member_event_creation
@@ -26,8 +27,10 @@ class Calendar extends Model
         'owner_id',
         'name',
         'slug',
+        'uuid',
         'description',
         'visibility',
+        'color',
         'allow_member_event_creation',
     ];
 
@@ -36,6 +39,20 @@ class Calendar extends Model
         return [
             'allow_member_event_creation' => 'boolean',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Calendar $calendar) {
+            if (empty($calendar->uuid)) {
+                $calendar->uuid = (string) Str::uuid7();
+            }
+        });
     }
 
     public static function generateUniqueSlug(string $name, ?int $excludeId = null): string
@@ -76,6 +93,11 @@ class Calendar extends Model
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(CalendarJoinRequest::class);
     }
 
     public function isOwnedBy(User $user): bool
