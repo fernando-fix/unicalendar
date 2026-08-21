@@ -48,19 +48,19 @@ test('calendar creation generates unique slug', function () {
 test('calendar page is accessible for public calendars', function () {
     $calendar = Calendar::factory()->create(['visibility' => 'public']);
 
-    $response = $this->get(route('calendars.show', $calendar->slug));
+    $response = $this->get(route('calendars.show', $calendar->uuid));
 
     $response->assertOk();
 });
 
-test('private calendar is not accessible to non-members', function () {
+test('private calendar shows limited view to non-members', function () {
     $calendar = Calendar::factory()->create(['visibility' => 'private']);
     $nonMember = User::factory()->create();
 
     $this->actingAs($nonMember);
-    $response = $this->get(route('calendars.show', $calendar->slug));
+    $response = $this->get(route('calendars.show', $calendar->uuid));
 
-    $response->assertForbidden();
+    $response->assertOk();
 });
 
 test('private calendar is accessible to members', function () {
@@ -69,7 +69,7 @@ test('private calendar is accessible to members', function () {
     $calendar->members()->attach($member->id, ['role' => 'member']);
 
     $this->actingAs($member);
-    $response = $this->get(route('calendars.show', $calendar->slug));
+    $response = $this->get(route('calendars.show', $calendar->uuid));
 
     $response->assertOk();
 });
@@ -81,7 +81,7 @@ test('owner can update calendar settings', function () {
     $calendar->update(['owner_id' => $owner->id]);
 
     $this->actingAs($owner);
-    $response = $this->put(route('calendars.update', $calendar->slug), [
+    $response = $this->put(route('calendars.update', $calendar->uuid), [
         'name' => 'Updated Name',
         'visibility' => 'private',
     ]);
@@ -101,7 +101,7 @@ test('owner can delete calendar', function () {
     $calendar->update(['owner_id' => $owner->id]);
 
     $this->actingAs($owner);
-    $response = $this->delete(route('calendars.destroy', $calendar->slug));
+    $response = $this->delete(route('calendars.destroy', $calendar->uuid));
 
     $response->assertRedirect(route('dashboard'));
     $this->assertDatabaseMissing('calendars', ['id' => $calendar->id]);
@@ -117,7 +117,7 @@ test('non-owner cannot delete calendar', function () {
     $calendar->members()->attach($nonOwner->id, ['role' => 'member']);
 
     $this->actingAs($nonOwner);
-    $response = $this->delete(route('calendars.destroy', $calendar->slug));
+    $response = $this->delete(route('calendars.destroy', $calendar->uuid));
 
     $this->assertDatabaseHas('calendars', ['id' => $calendar->id]);
 });
@@ -127,7 +127,7 @@ test('user can join a public calendar', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
-    $response = $this->post(route('calendars.join', $calendar->slug));
+    $response = $this->post(route('calendars.join', $calendar->uuid));
 
     $response->assertRedirect();
     $this->assertDatabaseHas('calendar_user', [
@@ -147,7 +147,7 @@ test('user can leave a calendar they are member of', function () {
     $calendar->members()->attach($member->id, ['role' => 'member']);
 
     $this->actingAs($member);
-    $response = $this->delete(route('calendars.leave', $calendar->slug));
+    $response = $this->delete(route('calendars.leave', $calendar->uuid));
 
     $response->assertRedirect();
     $this->assertDatabaseMissing('calendar_user', [
@@ -163,11 +163,85 @@ test('owner cannot leave their own calendar', function () {
     $calendar->update(['owner_id' => $owner->id]);
 
     $this->actingAs($owner);
-    $response = $this->delete(route('calendars.leave', $calendar->slug));
+    $response = $this->delete(route('calendars.leave', $calendar->uuid));
 
     $response->assertRedirect();
     $this->assertDatabaseHas('calendar_user', [
         'calendar_id' => $calendar->id,
         'user_id' => $owner->id,
+    ]);
+});
+
+test('user can request to join a private calendar', function () {
+    $calendar = Calendar::factory()->create(['visibility' => 'private']);
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+    $response = $this->post(route('calendars.join', $calendar->uuid));
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('calendar_join_requests', [
+        'calendar_id' => $calendar->id,
+        'user_id' => $user->id,
+        'status' => 'pending',
+    ]);
+    $this->assertDatabaseMissing('calendar_user', [
+        'calendar_id' => $calendar->id,
+        'user_id' => $user->id,
+    ]);
+});
+
+test('owner can approve a join request', function () {
+    $calendar = Calendar::factory()->create(['visibility' => 'private']);
+    $owner = User::factory()->create();
+    $calendar->members()->attach($owner->id, ['role' => 'owner']);
+    $calendar->update(['owner_id' => $owner->id]);
+
+    $user = User::factory()->create();
+    $request = $calendar->joinRequests()->create([
+        'user_id' => $user->id,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($owner);
+    $response = $this->put(route('calendars.requests.approve', [$calendar->uuid, $request->id]));
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('calendar_join_requests', [
+        'id' => $request->id,
+        'status' => 'approved',
+        'reviewed_by' => $owner->id,
+    ]);
+    $this->assertDatabaseHas('calendar_user', [
+        'calendar_id' => $calendar->id,
+        'user_id' => $user->id,
+        'role' => 'member',
+    ]);
+});
+
+test('owner can reject a join request', function () {
+    $calendar = Calendar::factory()->create(['visibility' => 'private']);
+    $owner = User::factory()->create();
+    $calendar->members()->attach($owner->id, ['role' => 'owner']);
+    $calendar->update(['owner_id' => $owner->id]);
+
+    $user = User::factory()->create();
+    $request = $calendar->joinRequests()->create([
+        'user_id' => $user->id,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($owner);
+    $response = $this->put(route('calendars.requests.reject', [$calendar->uuid, $request->id]));
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('calendar_join_requests', [
+        'id' => $request->id,
+        'status' => 'rejected',
+        'reviewed_by' => $owner->id,
+    ]);
+    $this->assertDatabaseMissing('calendar_user', [
+        'calendar_id' => $calendar->id,
+        'user_id' => $user->id,
     ]);
 });

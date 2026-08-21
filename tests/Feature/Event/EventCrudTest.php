@@ -11,7 +11,7 @@ test('owner can create event', function () {
     $calendar->members()->attach($owner->id, ['role' => 'owner']);
 
     $this->actingAs($owner);
-    $response = $this->post(route('events.store', $calendar->slug), [
+    $response = $this->post(route('events.store', $calendar->uuid), [
         'title' => 'Team Meeting',
         'description' => 'Weekly sync',
         'type' => 'meeting',
@@ -40,7 +40,7 @@ test('member can create event when allowed', function () {
     $calendar->members()->attach($member->id, ['role' => 'member']);
 
     $this->actingAs($member);
-    $response = $this->post(route('events.store', $calendar->slug), [
+    $response = $this->post(route('events.store', $calendar->uuid), [
         'title' => 'Member Event',
         'type' => 'event',
         'start_at' => Carbon::now()->addDays(2)->toIso8601String(),
@@ -65,7 +65,7 @@ test('member cannot create event when not allowed', function () {
     $calendar->members()->attach($member->id, ['role' => 'member']);
 
     $this->actingAs($member);
-    $response = $this->post(route('events.store', $calendar->slug), [
+    $response = $this->post(route('events.store', $calendar->uuid), [
         'title' => 'Member Event',
         'type' => 'event',
         'start_at' => Carbon::now()->addDays(2)->toIso8601String(),
@@ -84,7 +84,7 @@ test('event creation validates required fields', function () {
     $calendar->members()->attach($owner->id, ['role' => 'owner']);
 
     $this->actingAs($owner);
-    $response = $this->post(route('events.store', $calendar->slug), []);
+    $response = $this->post(route('events.store', $calendar->uuid), []);
 
     $response->assertSessionHasErrors(['title', 'type', 'start_at']);
 });
@@ -95,7 +95,7 @@ test('event end_at cannot be before start_at', function () {
     $calendar->members()->attach($owner->id, ['role' => 'owner']);
 
     $this->actingAs($owner);
-    $response = $this->post(route('events.store', $calendar->slug), [
+    $response = $this->post(route('events.store', $calendar->uuid), [
         'title' => 'Event',
         'type' => 'meeting',
         'start_at' => Carbon::now()->addDays(5)->toIso8601String(),
@@ -116,7 +116,7 @@ test('owner can update event', function () {
     ]);
 
     $this->actingAs($owner);
-    $response = $this->put(route('events.update', [$calendar->slug, $event->id]), [
+    $response = $this->put(route('events.update', [$calendar->uuid, $event->id]), [
         'title' => 'Updated Title',
     ]);
 
@@ -141,7 +141,7 @@ test('creator can update own event', function () {
     ]);
 
     $this->actingAs($creator);
-    $response = $this->put(route('events.update', [$calendar->slug, $event->id]), [
+    $response = $this->put(route('events.update', [$calendar->uuid, $event->id]), [
         'title' => 'Creator Updated',
     ]);
 
@@ -169,7 +169,7 @@ test('non-owner non-creator cannot update event', function () {
     $calendar->members()->attach($otherMember->id, ['role' => 'member']);
 
     $this->actingAs($otherMember);
-    $response = $this->put(route('events.update', [$calendar->slug, $event->id]), [
+    $response = $this->put(route('events.update', [$calendar->uuid, $event->id]), [
         'title' => 'Hacked Title',
     ]);
 
@@ -191,7 +191,7 @@ test('owner can delete event', function () {
     ]);
 
     $this->actingAs($owner);
-    $response = $this->delete(route('events.destroy', [$calendar->slug, $event->id]));
+    $response = $this->delete(route('events.destroy', [$calendar->uuid, $event->id]));
 
     $response->assertRedirect();
     $this->assertDatabaseMissing('events', ['id' => $event->id]);
@@ -204,7 +204,7 @@ test('event page shows event details', function () {
         'title' => 'Important Meeting',
     ]);
 
-    $response = $this->get(route('events.show', [$calendar->slug, $event->id]));
+    $response = $this->get(route('events.show', [$calendar->uuid, $event->id]));
 
     $response->assertOk();
 });

@@ -11,7 +11,7 @@ test('authenticated user can attend event', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
-    $response = $this->post(route('events.attend', [$calendar->slug, $event->id]), [
+    $response = $this->post(route('events.attend', [$calendar->uuid, $event->id]), [
         'status' => 'attending',
     ]);
 
@@ -30,11 +30,11 @@ test('user can change attendance status', function () {
 
     $this->actingAs($user);
 
-    $this->post(route('events.attend', [$calendar->slug, $event->id]), [
+    $this->post(route('events.attend', [$calendar->uuid, $event->id]), [
         'status' => 'attending',
     ]);
 
-    $this->post(route('events.attend', [$calendar->slug, $event->id]), [
+    $this->post(route('events.attend', [$calendar->uuid, $event->id]), [
         'status' => 'maybe',
     ]);
 
@@ -92,7 +92,7 @@ test('unauthenticated user cannot attend event', function () {
     $calendar = Calendar::factory()->create(['visibility' => 'public']);
     $event = Event::factory()->create(['calendar_id' => $calendar->id]);
 
-    $response = $this->post(route('events.attend', [$calendar->slug, $event->id]), [
+    $response = $this->post(route('events.attend', [$calendar->uuid, $event->id]), [
         'status' => 'attending',
     ]);
 

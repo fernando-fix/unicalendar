@@ -11,7 +11,7 @@ export default function Forbidden() {
                 <p className="mt-2 text-muted-foreground">
                     Você não tem permissão para acessar esta página.
                 </p>
-                <Button className="mt-6" render={<Link href="/" />}>
+                <Button className="mt-6" nativeButton={false} render={<Link href="/" />}>
                     Voltar
                 </Button>
             </div>

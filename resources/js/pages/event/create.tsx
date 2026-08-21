@@ -26,7 +26,7 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        post(`/calendar/${calendar.slug}/events`);
+        post(`/calendar/${calendar.uuid}/events`);
     }
 
     return (
@@ -35,7 +35,7 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
 
             <div className="mx-auto max-w-xl">
                 <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                    <Link href={`/calendar/${calendar.slug}`} className="hover:text-foreground">
+                    <Link href={`/calendar/${calendar.uuid}`} className="hover:text-foreground">
                         {calendar.name}
                     </Link>
                     <span>/</span>
@@ -153,7 +153,8 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
                         <Button
                             variant="outline"
                             type="button"
-                            render={<Link href={`/calendar/${calendar.slug}`} />}
+                            nativeButton={false}
+                            render={<Link href={`/calendar/${calendar.uuid}`} />}
                         >
                             Cancelar
                         </Button>

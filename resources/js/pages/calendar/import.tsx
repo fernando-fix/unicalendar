@@ -144,6 +144,7 @@ export default function CalendarImport() {
                         <Button
                             variant="outline"
                             type="button"
+                            nativeButton={false}
                             render={<Link href="/dashboard" />}
                         >
                             Cancelar

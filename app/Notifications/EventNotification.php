@@ -30,11 +30,11 @@ class EventNotification extends Notification
                 ->subject("Novo evento em {$calendar->name}")
                 ->line("Um novo evento \"{$this->event->title}\" foi criado em {$calendar->name}.")
                 ->line("Data: {$this->event->start_at->format('d/m/Y H:i')}")
-                ->action('Ver evento', route('events.show', [$calendar->slug, $this->event->id])),
+                ->action('Ver evento', route('events.show', [$calendar->uuid, $this->event->id])),
             'updated' => (new MailMessage)
                 ->subject("Evento atualizado em {$calendar->name}")
                 ->line("O evento \"{$this->event->title}\" foi atualizado em {$calendar->name}.")
-                ->action('Ver evento', route('events.show', [$calendar->slug, $this->event->id])),
+                ->action('Ver evento', route('events.show', [$calendar->uuid, $this->event->id])),
             'deleted' => (new MailMessage)
                 ->subject("Evento removido em {$calendar->name}")
                 ->line("O evento \"{$this->event->title}\" foi removido de {$calendar->name}."),

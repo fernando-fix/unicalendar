@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendeeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CalendarImportController;
+use App\Http\Controllers\CalendarJoinRequestController;
 use App\Http\Controllers\CalendarMembershipController;
 use App\Http\Controllers\CalendarsController;
 use App\Http\Controllers\CalendarSettingsController;
@@ -45,44 +46,53 @@ Route::middleware('auth')->group(function () {
     Route::post('/calendar', [CalendarController::class, 'store'])->name('calendars.store');
     Route::get('/calendar/import', [CalendarImportController::class, 'show'])->name('calendars.import');
     Route::post('/calendar/import', [CalendarImportController::class, 'store']);
-    Route::put('/calendar/{calendar:slug}', [CalendarController::class, 'update'])->name('calendars.update');
-    Route::delete('/calendar/{calendar:slug}', [CalendarController::class, 'destroy'])->name('calendars.destroy');
+    Route::put('/calendar/{calendar:uuid}', [CalendarController::class, 'update'])->name('calendars.update');
+    Route::delete('/calendar/{calendar:uuid}', [CalendarController::class, 'destroy'])->name('calendars.destroy');
 });
 
 // Calendar settings
 Route::middleware('auth')->group(function () {
-    Route::get('/calendar/{calendar:slug}/settings', [CalendarSettingsController::class, 'show'])->name('calendars.settings');
-    Route::put('/calendar/{calendar:slug}/settings', [CalendarSettingsController::class, 'update']);
+    Route::get('/calendar/{calendar:uuid}/settings', [CalendarSettingsController::class, 'show'])->name('calendars.settings');
+    Route::put('/calendar/{calendar:uuid}/settings', [CalendarSettingsController::class, 'update']);
 });
 
 // Calendar membership
 Route::middleware('auth')->group(function () {
-    Route::post('/calendar/{calendar:slug}/join', [CalendarMembershipController::class, 'store'])->name('calendars.join');
-    Route::delete('/calendar/{calendar:slug}/leave', [CalendarMembershipController::class, 'destroy'])->name('calendars.leave');
+    Route::post('/calendar/{calendar:uuid}/join', [CalendarMembershipController::class, 'store'])->name('calendars.join');
+    Route::delete('/calendar/{calendar:uuid}/leave', [CalendarMembershipController::class, 'destroy'])->name('calendars.leave');
+    Route::delete('/calendar/{calendar:uuid}/members/{userId}', [CalendarMembershipController::class, 'remove'])->name('calendars.members.remove');
+});
+
+// Calendar join requests
+Route::middleware('auth')->group(function () {
+    Route::get('/calendar/{calendar:uuid}/requests', [CalendarJoinRequestController::class, 'index'])->name('calendars.requests');
+    Route::put('/calendar/{calendar:uuid}/requests/{joinRequest}/approve', [CalendarJoinRequestController::class, 'approve'])->name('calendars.requests.approve');
+    Route::put('/calendar/{calendar:uuid}/requests/{joinRequest}/reject', [CalendarJoinRequestController::class, 'reject'])->name('calendars.requests.reject');
 });
 
 // Calendar public view (works for both authenticated and guest)
-Route::get('/calendar/{calendar:slug}', [CalendarController::class, 'show'])->name('calendars.show');
+Route::get('/calendar/{calendar:uuid}', [CalendarController::class, 'show'])->name('calendars.show');
 
 // Event routes
 Route::middleware('auth')->group(function () {
     Route::get('/events/create', [EventController::class, 'quickCreate'])->name('events.quick-create');
-    Route::get('/calendar/{calendar:slug}/events/create', [EventController::class, 'create'])->name('events.create');
-    Route::post('/calendar/{calendar:slug}/events', [EventController::class, 'store'])->name('events.store');
-    Route::get('/calendar/{calendar:slug}/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
-    Route::put('/calendar/{calendar:slug}/events/{event}', [EventController::class, 'update'])->name('events.update');
-    Route::delete('/calendar/{calendar:slug}/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
+    Route::get('/calendar/{calendar:uuid}/events/create', [EventController::class, 'create'])->name('events.create');
+    Route::post('/calendar/{calendar:uuid}/events', [EventController::class, 'store'])->name('events.store');
+    Route::post('/calendar/{calendar:uuid}/events/batch', [EventController::class, 'storeBatch'])->name('events.store-batch');
+    Route::get('/calendar/{calendar:uuid}/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'update'])->name('events.update');
+    Route::delete('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
 });
 
-Route::get('/calendar/{calendar:slug}/events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::get('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'show'])->name('events.show');
 
 // Attendance
 Route::middleware('auth')->group(function () {
-    Route::post('/calendar/{calendar:slug}/events/{event}/attend', [AttendeeController::class, 'store'])->name('events.attend');
+    Route::post('/calendar/{calendar:uuid}/events/{event}/attend', [AttendeeController::class, 'store'])->name('events.attend');
 });
 
 // Comments
 Route::middleware('auth')->group(function () {
-    Route::post('/calendar/{calendar:slug}/events/{event}/comments', [CommentController::class, 'store'])->name('comments.store');
-    Route::delete('/calendar/{calendar:slug}/events/{event}/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::post('/calendar/{calendar:uuid}/events/{event}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/calendar/{calendar:uuid}/events/{event}/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 });

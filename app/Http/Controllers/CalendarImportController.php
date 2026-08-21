@@ -97,7 +97,7 @@ class CalendarImportController extends Controller
 
             Event::insert($mappedEvents);
 
-            return redirect()->route('calendars.show', $calendar->slug)
+            return redirect()->route('calendars.show', $calendar->uuid)
                 ->with('success', count($mappedEvents).' eventos importados com sucesso.');
         } catch (\Exception $e) {
             return back()->withErrors([

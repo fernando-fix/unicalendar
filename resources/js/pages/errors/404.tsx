@@ -11,7 +11,7 @@ export default function NotFound() {
                 <p className="mt-2 text-muted-foreground">
                     A página que você procura não existe ou foi movida.
                 </p>
-                <Button className="mt-6" render={<Link href="/" />}>
+                <Button className="mt-6" nativeButton={false} render={<Link href="/" />}>
                     Voltar ao início
                 </Button>
             </div>

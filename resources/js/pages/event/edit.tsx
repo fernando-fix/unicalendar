@@ -32,7 +32,7 @@ export default function EventEdit({ calendar, event }: EventEditProps) {
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        put(`/calendar/${calendar.slug}/events/${event.id}`);
+        put(`/calendar/${calendar.uuid}/events/${event.id}`);
     }
 
     return (
@@ -41,7 +41,7 @@ export default function EventEdit({ calendar, event }: EventEditProps) {
 
             <div className="mx-auto max-w-xl">
                 <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                    <Link href={`/calendar/${calendar.slug}`} className="hover:text-foreground">
+                    <Link href={`/calendar/${calendar.uuid}`} className="hover:text-foreground">
                         {calendar.name}
                     </Link>
                     <span>/</span>
@@ -159,8 +159,9 @@ export default function EventEdit({ calendar, event }: EventEditProps) {
                         <Button
                             variant="outline"
                             type="button"
+                            nativeButton={false}
                             render={
-                                <Link href={`/calendar/${calendar.slug}/events/${event.id}`} />
+                                <Link href={`/calendar/${calendar.uuid}/events/${event.id}`} />
                             }
                         >
                             Cancelar

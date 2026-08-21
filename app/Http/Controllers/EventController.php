@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBatchEventRequest;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\Calendar;
@@ -32,6 +33,36 @@ class EventController extends Controller
         ]);
     }
 
+    public function storeBatch(StoreBatchEventRequest $request, Calendar $calendar)
+    {
+        $this->authorize('create', [Event::class, $calendar]);
+
+        $user = auth()->user();
+        $createdEvents = [];
+
+        foreach ($request->dates as $date) {
+            $event = $calendar->events()->create([
+                'creator_id' => $user->id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'type' => $request->type,
+                'start_at' => $date['start_at'],
+                'end_at' => $date['end_at'],
+                'location' => $request->location,
+                'meeting_url' => $request->meeting_url,
+            ]);
+
+            $createdEvents[] = $event;
+        }
+
+        foreach ($createdEvents as $event) {
+            $this->notifyMembers($calendar, $event, 'created');
+        }
+
+        return redirect()->route('calendars.show', $calendar->uuid)
+            ->with('success', count($createdEvents).' eventos criados com sucesso.');
+    }
+
     public function create(Calendar $calendar)
     {
         $this->authorize('create', [Event::class, $calendar]);
@@ -59,7 +90,7 @@ class EventController extends Controller
 
         $this->notifyMembers($calendar, $event, 'created');
 
-        return redirect()->route('events.show', [$calendar->slug, $event->id]);
+        return redirect()->route('events.show', [$calendar->uuid, $event->id]);
     }
 
     public function show(Calendar $calendar, Event $event)
@@ -98,7 +129,7 @@ class EventController extends Controller
 
         $this->notifyMembers($calendar, $event, 'updated');
 
-        return redirect()->route('events.show', [$calendar->slug, $event->id]);
+        return redirect()->route('events.show', [$calendar->uuid, $event->id]);
     }
 
     public function destroy(Calendar $calendar, Event $event)
@@ -109,7 +140,7 @@ class EventController extends Controller
 
         $event->delete();
 
-        return redirect()->route('calendars.show', $calendar->slug);
+        return redirect()->route('calendars.show', $calendar->uuid);
     }
 
     private function notifyMembers(Calendar $calendar, Event $event, string $action): void

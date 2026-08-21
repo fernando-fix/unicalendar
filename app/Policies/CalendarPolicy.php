@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Calendar;
+use App\Models\CalendarJoinRequest;
 use App\Models\User;
 
 class CalendarPolicy
@@ -42,11 +43,23 @@ class CalendarPolicy
 
     public function join(User $user, Calendar $calendar): bool
     {
-        return ! $calendar->hasMember($user);
+        if ($calendar->hasMember($user)) {
+            return false;
+        }
+
+        return ! CalendarJoinRequest::where('calendar_id', $calendar->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->exists();
     }
 
     public function leave(User $user, Calendar $calendar): bool
     {
         return $calendar->hasMember($user) && ! $calendar->isOwnedBy($user);
+    }
+
+    public function removeMember(User $user, Calendar $calendar): bool
+    {
+        return $calendar->isOwnedBy($user);
     }
 }

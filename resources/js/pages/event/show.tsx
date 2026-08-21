@@ -66,14 +66,14 @@ export default function EventShow({ calendar, event, userAttendance }: EventShow
     });
 
     function handleAttendance(status: string) {
-        router.post(`/calendar/${calendar.slug}/events/${event.id}/attend`, {
+        router.post(`/calendar/${calendar.uuid}/events/${event.id}/attend`, {
             status,
         });
     }
 
     function handleSubmitComment(e: React.FormEvent) {
         e.preventDefault();
-        postComment(`/calendar/${calendar.slug}/events/${event.id}/comments`, {
+        postComment(`/calendar/${calendar.uuid}/events/${event.id}/comments`, {
             onSuccess: () => resetComment(),
         });
     }
@@ -81,7 +81,7 @@ export default function EventShow({ calendar, event, userAttendance }: EventShow
     function handleDeleteComment(commentId: number) {
         if (confirm('Tem certeza que deseja excluir este comentário?')) {
             router.delete(
-                `/calendar/${calendar.slug}/events/${event.id}/comments/${commentId}`
+                `/calendar/${calendar.uuid}/events/${event.id}/comments/${commentId}`
             );
         }
     }
@@ -106,7 +106,7 @@ export default function EventShow({ calendar, event, userAttendance }: EventShow
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Link href={`/calendar/${calendar.slug}`} className="hover:text-foreground">
+                    <Link href={`/calendar/${calendar.uuid}`} className="hover:text-foreground">
                         {calendar.name}
                     </Link>
                     <span>/</span>
@@ -127,7 +127,7 @@ export default function EventShow({ calendar, event, userAttendance }: EventShow
                         </div>
                         {auth.user && (event.creator_id === auth.user.id || calendar.owner_id === auth.user.id) && (
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" render={<Link href={`/calendar/${calendar.slug}/events/${event.id}/edit`} />}>
+                                <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/calendar/${calendar.uuid}/events/${event.id}/edit`} />}>
                                     <PencilIcon className="size-4" />
                                     Editar
                                 </Button>
@@ -136,7 +136,7 @@ export default function EventShow({ calendar, event, userAttendance }: EventShow
                                     size="sm"
                                     onClick={() => {
                                         if (confirm('Tem certeza que deseja excluir este evento?')) {
-                                            router.delete(`/calendar/${calendar.slug}/events/${event.id}`);
+                                            router.delete(`/calendar/${calendar.uuid}/events/${event.id}`);
                                         }
                                     }}
                                 >

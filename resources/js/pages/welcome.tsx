@@ -19,15 +19,15 @@ export default function Welcome() {
                     </div>
                     <div className="flex items-center gap-3">
                         {auth.user ? (
-                            <Button render={<Link href="/dashboard" />}>
+                            <Button nativeButton={false} render={<Link href="/dashboard" />}>
                                 Dashboard
                             </Button>
                         ) : (
                             <>
-                                <Button variant="ghost" render={<Link href="/login" />}>
+                                <Button variant="ghost" nativeButton={false} render={<Link href="/login" />}>
                                     Log in
                                 </Button>
-                                <Button render={<Link href="/register" />}>
+                                <Button nativeButton={false} render={<Link href="/register" />}>
                                     Register
                                 </Button>
                             </>
@@ -54,17 +54,18 @@ export default function Welcome() {
 
                         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
                             {auth.user ? (
-                                <Button size="lg" render={<Link href="/dashboard" />}>
+                                <Button size="lg" nativeButton={false} render={<Link href="/dashboard" />}>
                                     Ir para o Dashboard
                                 </Button>
                             ) : (
                                 <>
-                                    <Button size="lg" render={<Link href="/register" />}>
+                                    <Button size="lg" nativeButton={false} render={<Link href="/register" />}>
                                         Começar
                                     </Button>
                                     <Button
                                         size="lg"
                                         variant="outline"
+                                        nativeButton={false}
                                         render={<Link href="/login" />}
                                     >
                                         Já tenho conta

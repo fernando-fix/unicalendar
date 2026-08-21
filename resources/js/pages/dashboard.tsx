@@ -87,7 +87,7 @@ function formatDateKey(date: Date) {
 function EventListItem({ event }: { event: Event }) {
     return (
         <Link
-            href={`/calendar/${event.calendar?.slug}/events/${event.id}`}
+            href={`/calendar/${event.calendar?.uuid}/events/${event.id}`}
             className="flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/50"
         >
             <div className="flex-1 min-w-0">
@@ -200,6 +200,7 @@ export default function Dashboard({
                 <h1 className="text-2xl font-bold">Dashboard</h1>
                 <Button
                     render={<Link href={selectedDay ? `/events/create?date=${selectedDay}` : '/events/create'} />}
+                    nativeButton={false}
                     disabled={!selectedDay}
                     variant={selectedDay ? 'default' : 'outline'}
                 >
@@ -296,7 +297,7 @@ export default function Dashboard({
                                         {selectedDayEvents.map(({ event, color }) => (
                                             <Link
                                                 key={event.id}
-                                                href={`/calendar/${event.calendar?.slug}/events/${event.id}`}
+                                                href={`/calendar/${event.calendar?.uuid}/events/${event.id}`}
                                                 className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
                                             >
                                                 <div className="flex items-center gap-2">
@@ -354,7 +355,7 @@ export default function Dashboard({
                                     />
                                     <span className={`size-3 rounded-full ${CALENDAR_DOT_COLORS[cal.color] ?? 'bg-gray-500'}`} />
                                     <Link
-                                        href={`/calendar/${cal.slug}`}
+                                        href={`/calendar/${cal.uuid}`}
                                         className="text-sm font-medium hover:underline truncate"
                                         onClick={(e) => e.stopPropagation()}
                                     >

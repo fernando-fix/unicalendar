@@ -11,7 +11,7 @@ test('authenticated user can comment on event', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
-    $response = $this->post(route('comments.store', [$calendar->slug, $event->id]), [
+    $response = $this->post(route('comments.store', [$calendar->uuid, $event->id]), [
         'body' => 'Great event!',
     ]);
 
@@ -33,7 +33,7 @@ test('comment author can delete own comment', function () {
     ]);
 
     $this->actingAs($user);
-    $response = $this->delete(route('comments.destroy', [$calendar->slug, $event->id, $comment->id]));
+    $response = $this->delete(route('comments.destroy', [$calendar->uuid, $event->id, $comment->id]));
 
     $response->assertRedirect();
     $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
@@ -53,7 +53,7 @@ test('calendar owner can delete any comment', function () {
     ]);
 
     $this->actingAs($owner);
-    $response = $this->delete(route('comments.destroy', [$calendar->slug, $event->id, $comment->id]));
+    $response = $this->delete(route('comments.destroy', [$calendar->uuid, $event->id, $comment->id]));
 
     $response->assertRedirect();
     $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
@@ -76,7 +76,7 @@ test('non-author non-owner cannot delete comment', function () {
     $calendar->members()->attach($otherUser->id, ['role' => 'member']);
 
     $this->actingAs($otherUser);
-    $response = $this->delete(route('comments.destroy', [$calendar->slug, $event->id, $comment->id]));
+    $response = $this->delete(route('comments.destroy', [$calendar->uuid, $event->id, $comment->id]));
 
     $response->assertForbidden();
     $this->assertDatabaseHas('comments', ['id' => $comment->id]);
@@ -86,7 +86,7 @@ test('unauthenticated user cannot comment', function () {
     $calendar = Calendar::factory()->create(['visibility' => 'public']);
     $event = Event::factory()->create(['calendar_id' => $calendar->id]);
 
-    $response = $this->post(route('comments.store', [$calendar->slug, $event->id]), [
+    $response = $this->post(route('comments.store', [$calendar->uuid, $event->id]), [
         'body' => 'Nice!',
     ]);
 
