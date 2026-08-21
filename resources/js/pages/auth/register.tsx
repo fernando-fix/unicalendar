@@ -1,4 +1,5 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { type PageProps } from '@/types';
 import GuestLayout from '@/layouts/guest-layout';
 import {
     Card,
@@ -13,17 +14,25 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
 export default function Register() {
+    const pageUrl = usePage<PageProps>().url;
+    const redirect = new URL(pageUrl, 'http://localhost').searchParams.get('redirect') ?? '';
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        redirect,
     });
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
         post('/register');
     }
+
+    const loginHref = redirect
+        ? `/login?redirect=${encodeURIComponent(redirect)}`
+        : '/login';
 
     return (
         <GuestLayout>
@@ -106,7 +115,7 @@ export default function Register() {
                         <p className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
                             <Link
-                                href="/login"
+                                href={loginHref}
                                 className="text-primary underline-offset-4 hover:underline"
                             >
                                 Log in

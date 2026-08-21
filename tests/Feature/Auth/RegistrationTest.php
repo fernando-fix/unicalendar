@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Calendar;
 use App\Models\User;
 
 test('registration page is accessible', function () {
@@ -24,6 +25,33 @@ test('new users can register with valid data', function () {
     $this->assertDatabaseHas('notification_preferences', [
         'user_id' => User::where('email', 'john@example.com')->first()->id,
     ]);
+});
+
+test('new users are redirected back to the calendar after registration when redirect is provided', function () {
+    $calendar = Calendar::factory()->create();
+
+    $response = $this->post(route('register'), [
+        'name' => 'John Doe',
+        'email' => 'john@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'redirect' => "/calendar/{$calendar->uuid}",
+    ]);
+
+    $response->assertRedirect("/calendar/{$calendar->uuid}");
+    $this->assertAuthenticated();
+});
+
+test('external redirect targets are rejected after registration', function () {
+    $response = $this->post(route('register'), [
+        'name' => 'John Doe',
+        'email' => 'john@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'redirect' => '//evil.example.com/calendar',
+    ]);
+
+    $response->assertRedirect(route('dashboard'));
 });
 
 test('new users cannot register with invalid data', function () {

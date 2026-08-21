@@ -168,6 +168,10 @@ export default function CalendarShow({
 
     const isPrivateLocked = calendar.visibility === 'private' && !isMember;
 
+    const authRedirect = encodeURIComponent(`/calendar/${calendar.uuid}`);
+    const loginUrl = `/login?redirect=${authRedirect}`;
+    const registerUrl = `/register?redirect=${authRedirect}`;
+
     return (
         <AppLayout>
             <Head title={calendar.name} />
@@ -204,13 +208,21 @@ export default function CalendarShow({
                             Copiar Link
                         </Button>
                         {!isLoggedIn ? (
-                            <Button
-                                variant="outline"
-                                nativeButton={false}
-                                render={<Link href="/login" />}
-                            >
-                                Faça login para participar
-                            </Button>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    nativeButton={false}
+                                    render={<Link href={loginUrl} />}
+                                >
+                                    Faça login para participar
+                                </Button>
+                                <Button
+                                    nativeButton={false}
+                                    render={<Link href={registerUrl} />}
+                                >
+                                    Registrar
+                                </Button>
+                            </>
                         ) : isOwner ? (
                             <>
                                 <Button nativeButton={false} render={<Link href={`/calendar/${calendar.uuid}/events/create${selectedDay ? `?date=${selectedDay}` : ''}`} />}>
@@ -259,13 +271,21 @@ export default function CalendarShow({
                                     </p>
                                 </div>
                                 {!isLoggedIn ? (
-                                    <Button
-                                        variant="outline"
-                                        nativeButton={false}
-                                        render={<Link href="/login" />}
-                                    >
-                                        Faça login para solicitar
-                                    </Button>
+                                    <div className="flex justify-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            nativeButton={false}
+                                            render={<Link href={loginUrl} />}
+                                        >
+                                            Faça login para solicitar
+                                        </Button>
+                                        <Button
+                                            nativeButton={false}
+                                            render={<Link href={registerUrl} />}
+                                        >
+                                            Registrar
+                                        </Button>
+                                    </div>
                                 ) : pendingRequest ? (
                                     <Button disabled>
                                         Solicitação enviada

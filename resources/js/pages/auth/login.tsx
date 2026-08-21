@@ -15,10 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export default function Login() {
+    const pageUrl = usePage<PageProps>().url;
+    const redirect = new URL(pageUrl, 'http://localhost').searchParams.get('redirect') ?? '';
+
     const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
         remember: false,
+        redirect,
     });
 
     const { flash } = usePage<PageProps>().props as PageProps & {
@@ -29,6 +33,10 @@ export default function Login() {
         e.preventDefault();
         post('/login');
     }
+
+    const registerHref = redirect
+        ? `/register?redirect=${encodeURIComponent(redirect)}`
+        : '/register';
 
     return (
         <GuestLayout>
@@ -99,7 +107,7 @@ export default function Login() {
                         <p className="text-center text-sm text-muted-foreground">
                             Don't have an account?{' '}
                             <Link
-                                href="/register"
+                                href={registerHref}
                                 className="text-primary underline-offset-4 hover:underline"
                             >
                                 Register

@@ -7,6 +7,7 @@ use App\Http\Requests\StoreLoginRequest;
 use App\Http\Requests\StoreRegistrationRequest;
 use App\Models\NotificationPreference;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -30,7 +31,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return $this->redirectAfterAuth($request);
     }
 
     public function showRegister()
@@ -57,7 +58,7 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(route('dashboard'));
+        return $this->redirectAfterAuth($request);
     }
 
     public function logout(Request $request)
@@ -68,5 +69,21 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    private function redirectAfterAuth(Request $request): RedirectResponse
+    {
+        $redirect = $request->input('redirect');
+
+        if (
+            is_string($redirect)
+            && str_starts_with($redirect, '/')
+            && ! str_starts_with($redirect, '//')
+            && ! str_contains($redirect, '://')
+        ) {
+            return redirect()->to($redirect);
+        }
+
+        return redirect()->intended(route('dashboard'));
     }
 }
