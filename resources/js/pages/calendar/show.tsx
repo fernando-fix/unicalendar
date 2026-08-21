@@ -16,8 +16,9 @@ import {
     MapPinIcon,
     ExternalLinkIcon,
     LinkIcon,
+    LockIcon,
 } from 'lucide-react';
-import type { Calendar, Event, SharedData } from '@/types';
+import type { Calendar, CalendarJoinRequest, Event, SharedData } from '@/types';
 
 type CalendarShowProps = {
     calendar: Calendar;
@@ -25,6 +26,8 @@ type CalendarShowProps = {
     upcomingEvents: Event[];
     isMember: boolean;
     userRole: string | null;
+    pendingRequest: CalendarJoinRequest | null;
+    pendingRequestsCount: number;
 };
 
 const EVENT_TYPES = ['meeting', 'deadline', 'exam', 'presentation', 'event', 'other'] as const;
@@ -73,6 +76,8 @@ export default function CalendarShow({
     upcomingEvents,
     isMember,
     userRole,
+    pendingRequest,
+    pendingRequestsCount,
 }: CalendarShowProps) {
     const { auth } = usePage<SharedData>().props;
     const isLoggedIn = !!auth.user;
@@ -145,21 +150,23 @@ export default function CalendarShow({
     }
 
     function handleJoin() {
-        router.post(`/calendar/${calendar.slug}/join`);
+        router.post(`/calendar/${calendar.uuid}/join`);
     }
 
     function handleLeave() {
-        router.delete(`/calendar/${calendar.slug}/leave`);
+        router.delete(`/calendar/${calendar.uuid}/leave`);
     }
 
     const handleCopyLink = useCallback(() => {
-        const url = `${window.location.origin}/calendar/${calendar.slug}`;
+        const url = `${window.location.origin}/calendar/${calendar.uuid}`;
         navigator.clipboard.writeText(url).then(() => {
             toast.success('Link copiado!');
         }).catch(() => {
             toast.error('Erro ao copiar link');
         });
-    }, [calendar.slug]);
+    }, [calendar.uuid]);
+
+    const isPrivateLocked = calendar.visibility === 'private' && !isMember;
 
     return (
         <AppLayout>
@@ -188,10 +195,6 @@ export default function CalendarShow({
                                     Por {calendar.owner.name}
                                 </span>
                             )}
-                            <span className="flex items-center gap-1">
-                                <UsersIcon className="size-3.5" />
-                                {calendar.members_count ?? calendar.members?.length ?? 0} membros
-                            </span>
                         </div>
                     </div>
 
@@ -203,36 +206,80 @@ export default function CalendarShow({
                         {!isLoggedIn ? (
                             <Button
                                 variant="outline"
+                                nativeButton={false}
                                 render={<Link href="/login" />}
                             >
                                 Faça login para participar
                             </Button>
                         ) : isOwner ? (
                             <>
-                                <Button render={<Link href={`/calendar/${calendar.slug}/events/create${selectedDay ? `?date=${selectedDay}` : ''}`} />}>
+                                <Button nativeButton={false} render={<Link href={`/calendar/${calendar.uuid}/events/create${selectedDay ? `?date=${selectedDay}` : ''}`} />}>
                                     <PlusIcon className="size-4" />
                                     Criar Evento
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    render={<Link href={`/calendar/${calendar.slug}/settings`} />}
+                                    nativeButton={false}
+                                    render={<Link href={`/calendar/${calendar.uuid}/settings`} />}
                                 >
                                     <SettingsIcon className="size-4" />
                                     Configurações
+                                    {pendingRequestsCount > 0 && (
+                                        <Badge variant="destructive" className="ml-1 h-5 min-w-5 rounded-full px-1 text-xs bg-red-500 text-white dark:bg-red-600">
+                                            {pendingRequestsCount}
+                                        </Badge>
+                                    )}
                                 </Button>
                             </>
                         ) : isMember ? (
                             <Button variant="destructive" onClick={handleLeave}>
                                 Sair do calendário
                             </Button>
+                        ) : pendingRequest ? (
+                            <Button disabled>
+                                Solicitação enviada
+                            </Button>
                         ) : (
                             <Button onClick={handleJoin}>
-                                Participar
+                                Solicitar participação
                             </Button>
                         )}
                     </div>
                 </div>
 
+                {isPrivateLocked ? (
+                    <Card>
+                        <CardContent className="py-12">
+                            <div className="text-center space-y-4">
+                                <LockIcon className="mx-auto size-12 text-muted-foreground/50" />
+                                <div>
+                                    <h2 className="text-lg font-semibold">Calendário Privado</h2>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Este calendário é privado. Solicite participação para acessar os eventos.
+                                    </p>
+                                </div>
+                                {!isLoggedIn ? (
+                                    <Button
+                                        variant="outline"
+                                        nativeButton={false}
+                                        render={<Link href="/login" />}
+                                    >
+                                        Faça login para solicitar
+                                    </Button>
+                                ) : pendingRequest ? (
+                                    <Button disabled>
+                                        Solicitação enviada
+                                    </Button>
+                                ) : (
+                                    <Button onClick={handleJoin}>
+                                        Solicitar participação
+                                    </Button>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                <>
                 {/* Filter Chips */}
                 <div className="flex flex-wrap gap-2">
                     <button
@@ -340,7 +387,7 @@ export default function CalendarShow({
                                             Nenhum evento neste dia{typeFilter ? ` do tipo "${TYPE_LABELS[typeFilter]}"` : ''}.
                                         </p>
                                         {isLoggedIn && (isOwner || (calendar.allow_member_event_creation && isMember)) && (
-                                            <Button size="sm" render={<Link href={`/calendar/${calendar.slug}/events/create?date=${selectedDay}`} />}>
+                                            <Button size="sm" nativeButton={false} render={<Link href={`/calendar/${calendar.uuid}/events/create?date=${selectedDay}`} />}>
                                                 <PlusIcon className="size-4" />
                                                 Criar evento
                                             </Button>
@@ -351,7 +398,7 @@ export default function CalendarShow({
                                         {selectedDayEvents.map((event) => (
                                             <Link
                                                 key={event.id}
-                                                href={`/calendar/${calendar.slug}/events/${event.id}`}
+                                                href={`/calendar/${calendar.uuid}/events/${event.id}`}
                                                 className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
                                             >
                                                 <div className="flex items-center gap-2">
@@ -429,7 +476,7 @@ export default function CalendarShow({
                                         return (
                                             <Link
                                                 key={event.id}
-                                                href={`/calendar/${calendar.slug}/events/${event.id}`}
+                                                href={`/calendar/${calendar.uuid}/events/${event.id}`}
                                                 className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
@@ -495,6 +542,8 @@ export default function CalendarShow({
                         )}
                     </div>
                 </div>
+                </>
+                )}
             </div>
         </AppLayout>
     );

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
-import { type PageProps } from '@/types';
+import { type PageProps, type SharedData } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,7 +32,7 @@ import {
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, totalPendingRequests } = usePage<SharedData>().props;
     const [mobileOpen, setMobileOpen] = useState(false);
 
     function toggleDark() {
@@ -78,12 +79,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                     key={link.href}
                                     variant="ghost"
                                     size="sm"
+                                    nativeButton={false}
                                     render={
                                         <Link href={link.href} />
                                     }
                                 >
                                     <link.icon className="size-4" />
                                     {link.label}
+                                    {link.href === '/calendars' && totalPendingRequests > 0 && (
+                                        <Badge variant="destructive" className="ml-1 h-5 min-w-5 rounded-full px-1 text-xs bg-red-500 text-white dark:bg-red-600">
+                                            {totalPendingRequests}
+                                        </Badge>
+                                    )}
                                 </Button>
                             ))}
                         </nav>
@@ -108,7 +115,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             >
                                 <Avatar className="size-6">
                                     <AvatarImage
-                                        src={auth.user?.avatar}
+                                        src={auth.user?.avatar ? `/storage/${auth.user.avatar}` : undefined}
                                         alt={auth.user?.name ?? ''}
                                     />
                                     <AvatarFallback>{initials}</AvatarFallback>
@@ -166,6 +173,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                         >
                                             <link.icon className="mr-2 size-4" />
                                             {link.label}
+                                            {link.href === '/calendars' && totalPendingRequests > 0 && (
+                                                <Badge variant="destructive" className="ml-auto h-5 min-w-5 rounded-full px-1 text-xs bg-red-500 text-white dark:bg-red-600">
+                                                    {totalPendingRequests}
+                                                </Badge>
+                                            )}
                                         </Button>
                                     ))}
                                 </nav>

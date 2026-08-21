@@ -16,9 +16,13 @@ class CalendarsController extends Controller
                 $query->where('start_at', '>=', now());
             }])
             ->withCount('members as members_count')
+            ->withCount(['joinRequests as pending_requests_count' => function ($query) {
+                $query->where('status', 'pending');
+            }])
             ->get();
 
         $memberCalendars = $user->calendars()
+            ->where('calendars.owner_id', '!=', $user->id)
             ->withCount(['events as upcoming_events_count' => function ($query) {
                 $query->where('start_at', '>=', now());
             }])

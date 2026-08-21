@@ -41,6 +41,17 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'totalPendingRequests' => function () use ($request) {
+                $user = $request->user();
+                if (! $user) {
+                    return 0;
+                }
+
+                return $user->calendarsOwned()
+                    ->join('calendar_join_requests', 'calendars.id', '=', 'calendar_join_requests.calendar_id')
+                    ->where('calendar_join_requests.status', 'pending')
+                    ->count();
+            },
         ];
     }
 }
