@@ -2,10 +2,16 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { type PageProps } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
-import { CalendarIcon, UsersIcon, BellIcon } from 'lucide-react';
+import { CalendarIcon, CalendarPlusIcon, UsersIcon, BellIcon } from 'lucide-react';
+
+type Stats = {
+    users: number;
+    calendars: number;
+    events: number;
+};
 
 export default function Welcome() {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, stats } = usePage<PageProps<{ stats: Stats }>>().props;
 
     return (
         <>
@@ -72,6 +78,32 @@ export default function Welcome() {
                                     </Button>
                                 </>
                             )}
+                        </div>
+                    </div>
+
+                    <div className="mt-16 grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="flex flex-col items-center gap-2 rounded-xl border p-6">
+                            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <UsersIcon className="size-6" />
+                            </div>
+                            <span className="text-3xl font-bold">{stats.users}</span>
+                            <p className="text-sm text-muted-foreground">Usuários registrados</p>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2 rounded-xl border p-6">
+                            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <CalendarIcon className="size-6" />
+                            </div>
+                            <span className="text-3xl font-bold">{stats.calendars}</span>
+                            <p className="text-sm text-muted-foreground">Calendários criados</p>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2 rounded-xl border p-6">
+                            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <CalendarPlusIcon className="size-6" />
+                            </div>
+                            <span className="text-3xl font-bold">{stats.events}</span>
+                            <p className="text-sm text-muted-foreground">Eventos registrados</p>
                         </div>
                     </div>
 
