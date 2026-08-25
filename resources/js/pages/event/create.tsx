@@ -1,9 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import EventDatesField, { type DateSlot } from '@/components/event-dates-field';
 import { ArrowLeftIcon } from 'lucide-react';
 import { EVENT_TYPES } from '@/types';
 import type { Calendar } from '@/types';
@@ -14,19 +16,28 @@ type EventCreateProps = {
 };
 
 export default function EventCreate({ calendar, date }: EventCreateProps) {
+    const [multipleDates, setMultipleDates] = useState(false);
+
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
+        summary: '',
         type: 'meeting',
         start_at: date ? `${date}T09:00` : '',
         end_at: date ? `${date}T10:00` : '',
         location: '',
         meeting_url: '',
+        dates: [{ start_at: date ? `${date}T09:00` : '', end_at: date ? `${date}T10:00` : '' }] as DateSlot[],
     });
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        post(`/calendar/${calendar.uuid}/events`);
+
+        if (multipleDates) {
+            post(`/calendar/${calendar.uuid}/events/batch`);
+        } else {
+            post(`/calendar/${calendar.uuid}/events`);
+        }
     }
 
     return (
@@ -73,6 +84,20 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
                     </div>
 
                     <div className="space-y-2">
+                        <Label htmlFor="summary">Resumo</Label>
+                        <Textarea
+                            id="summary"
+                            value={data.summary}
+                            onChange={(e) => setData('summary', e.target.value)}
+                            placeholder="Resumo do evento (pode ser editado pelos participantes)"
+                            rows={5}
+                        />
+                        {errors.summary && (
+                            <p className="text-sm text-destructive">{errors.summary}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
                         <Label htmlFor="type">Tipo</Label>
                         <select
                             id="type"
@@ -91,33 +116,12 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
                         )}
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="start_at">Data e hora de início</Label>
-                            <Input
-                                id="start_at"
-                                type="datetime-local"
-                                value={data.start_at}
-                                onChange={(e) => setData('start_at', e.target.value)}
-                            />
-                            {errors.start_at && (
-                                <p className="text-sm text-destructive">{errors.start_at}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="end_at">Data e hora de término</Label>
-                            <Input
-                                id="end_at"
-                                type="datetime-local"
-                                value={data.end_at}
-                                onChange={(e) => setData('end_at', e.target.value)}
-                            />
-                            {errors.end_at && (
-                                <p className="text-sm text-destructive">{errors.end_at}</p>
-                            )}
-                        </div>
-                    </div>
+                    <EventDatesField
+                        data={data}
+                        setData={setData}
+                        errors={errors}
+                        onMultipleChange={setMultipleDates}
+                    />
 
                     <div className="space-y-2">
                         <Label htmlFor="location">Local</Label>

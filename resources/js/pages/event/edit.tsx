@@ -23,6 +23,7 @@ export default function EventEdit({ calendar, event }: EventEditProps) {
     const { data, setData, put, processing, errors } = useForm({
         title: event.title,
         description: event.description ?? '',
+        summary: event.summary ?? '',
         type: event.type,
         start_at: toLocalDatetimeValue(event.start_at),
         end_at: event.end_at ? toLocalDatetimeValue(event.end_at) : '',
@@ -75,6 +76,20 @@ export default function EventEdit({ calendar, event }: EventEditProps) {
                         />
                         {errors.description && (
                             <p className="text-sm text-destructive">{errors.description}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="summary">Resumo</Label>
+                        <Textarea
+                            id="summary"
+                            value={data.summary}
+                            onChange={(e) => setData('summary', e.target.value)}
+                            placeholder="Resumo do evento (pode ser editado pelos participantes)"
+                            rows={5}
+                        />
+                        {errors.summary && (
+                            <p className="text-sm text-destructive">{errors.summary}</p>
                         )}
                     </div>
 

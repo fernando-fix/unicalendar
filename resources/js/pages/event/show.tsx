@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -18,13 +18,17 @@ import {
     CheckIcon,
     HelpCircleIcon,
     XIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Calendar, Event, Comment, SharedData } from '@/types';
 
 type EventShowProps = {
     calendar: Calendar;
     event: Event;
     userAttendance: string | null;
+    canEditSummary: boolean;
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -57,13 +61,55 @@ const STATUS_LABELS: Record<string, string> = {
     not_attending: 'Não vai participar',
 };
 
-export default function EventShow({ calendar, event, userAttendance }: EventShowProps) {
+export default function EventShow({ calendar, event, userAttendance, canEditSummary }: EventShowProps) {
     const { auth } = usePage<SharedData>().props;
     const isLoggedIn = !!auth.user;
+
+    const [isEditingSummary, setIsEditingSummary] = useState(false);
 
     const { data: commentData, setData: setCommentData, post: postComment, processing: commentProcessing, reset: resetComment } = useForm({
         body: '',
     });
+
+    const {
+        data: summaryData,
+        setData: setSummaryData,
+        put: putSummary,
+        processing: summaryProcessing,
+        errors: summaryErrors,
+        reset: resetSummary,
+    } = useForm({
+        summary: event.summary ?? '',
+    });
+
+    const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+    const [summaryIsClamped, setSummaryIsClamped] = useState(false);
+    const summaryRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isEditingSummary || isSummaryExpanded) {
+            return;
+        }
+
+        const el = summaryRef.current;
+        if (!el) {
+            return;
+        }
+
+        setSummaryIsClamped(el.scrollHeight > el.clientHeight);
+    }, [event.summary, isEditingSummary, isSummaryExpanded]);
+
+    function handleSaveSummary(e: React.FormEvent) {
+        e.preventDefault();
+        putSummary(`/calendar/${calendar.uuid}/events/${event.id}/summary`, {
+            onSuccess: () => setIsEditingSummary(false),
+        });
+    }
+
+    function handleCancelSummary() {
+        resetSummary();
+        setIsEditingSummary(false);
+    }
 
     function handleAttendance(status: string) {
         router.post(`/calendar/${calendar.uuid}/events/${event.id}/attend`, {
@@ -205,6 +251,92 @@ export default function EventShow({ calendar, event, userAttendance }: EventShow
                         </div>
                     </>
                 )}
+
+                <Separator />
+
+                {/* Summary Section */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-lg font-semibold">Resumo</h2>
+                        {isLoggedIn && canEditSummary && !isEditingSummary && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setIsSummaryExpanded(false);
+                                    setIsEditingSummary(true);
+                                }}
+                            >
+                                <PencilIcon className="size-4" />
+                                Editar resumo
+                            </Button>
+                        )}
+                    </div>
+
+                    {isEditingSummary ? (
+                        <form onSubmit={handleSaveSummary} className="space-y-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="summary">Resumo</Label>
+                                <Textarea
+                                    id="summary"
+                                    value={summaryData.summary}
+                                    onChange={(e) => setSummaryData('summary', e.target.value)}
+                                    placeholder="Escreva um resumo deste evento..."
+                                    rows={8}
+                                />
+                                {summaryErrors.summary && (
+                                    <p className="text-sm text-destructive">{summaryErrors.summary}</p>
+                                )}
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <Button type="button" variant="ghost" size="sm" onClick={handleCancelSummary}>
+                                    Cancelar
+                                </Button>
+                                <Button type="submit" size="sm" disabled={summaryProcessing}>
+                                    {summaryProcessing ? 'Salvando...' : 'Salvar resumo'}
+                                </Button>
+                            </div>
+                        </form>
+                    ) : event.summary ? (
+                        <>
+                            <div
+                                ref={summaryRef}
+                                className={cn(
+                                    'prose prose-sm max-w-none rounded-lg border p-3 dark:prose-invert',
+                                    !isSummaryExpanded && 'line-clamp-5',
+                                )}
+                            >
+                                <p className="whitespace-pre-wrap">{event.summary}</p>
+                            </div>
+                            {(summaryIsClamped || isSummaryExpanded) && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="-ml-2 mt-1 text-muted-foreground"
+                                    onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+                                >
+                                    {isSummaryExpanded ? (
+                                        <>
+                                            <ChevronUpIcon className="size-4" />
+                                            Mostrar menos
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ChevronDownIcon className="size-4" />
+                                            Mostrar mais
+                                        </>
+                                    )}
+                                </Button>
+                            )}
+                        </>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Nenhum resumo ainda.
+                            {isLoggedIn && canEditSummary && ' Use "Editar resumo" para adicionar um.'}
+                        </p>
+                    )}
+                </div>
 
                 <Separator />
 

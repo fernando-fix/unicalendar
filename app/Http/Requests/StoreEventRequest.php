@@ -16,6 +16,7 @@ class StoreEventRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'summary' => ['nullable', 'string'],
             'type' => ['required', 'in:meeting,deadline,exam,presentation,event,other'],
             'start_at' => ['required', 'date'],
             'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],

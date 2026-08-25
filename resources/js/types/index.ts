@@ -54,6 +54,7 @@ export type Event = {
     creator_id: number;
     title: string;
     description: string | null;
+    summary: string | null;
     type: 'meeting' | 'deadline' | 'exam' | 'presentation' | 'event' | 'other';
     start_at: string;
     end_at: string | null;

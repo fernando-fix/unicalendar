@@ -16,6 +16,7 @@ class UpdateEventRequest extends FormRequest
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'summary' => ['nullable', 'string'],
             'type' => ['sometimes', 'required', 'in:meeting,deadline,exam,presentation,event,other'],
             'start_at' => ['sometimes', 'required', 'date'],
             'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],

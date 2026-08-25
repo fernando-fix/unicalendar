@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $creator_id
  * @property string $title
  * @property string|null $description
+ * @property string|null $summary
  * @property string $type
  * @property Carbon $start_at
  * @property Carbon|null $end_at
@@ -30,6 +31,7 @@ class Event extends Model
         'creator_id',
         'title',
         'description',
+        'summary',
         'type',
         'start_at',
         'end_at',

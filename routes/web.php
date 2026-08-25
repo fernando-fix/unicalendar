@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/calendar/{calendar:uuid}/events/batch', [EventController::class, 'storeBatch'])->name('events.store-batch');
     Route::get('/calendar/{calendar:uuid}/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::put('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'update'])->name('events.update');
+    Route::put('/calendar/{calendar:uuid}/events/{event}/summary', [EventController::class, 'updateSummary'])->name('events.update-summary');
     Route::delete('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
 });
 

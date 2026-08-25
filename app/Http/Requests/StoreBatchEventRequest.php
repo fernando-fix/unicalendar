@@ -16,6 +16,7 @@ class StoreBatchEventRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'summary' => ['nullable', 'string'],
             'type' => ['required', 'in:meeting,deadline,exam,presentation,event,other'],
             'location' => ['nullable', 'string', 'max:255'],
             'meeting_url' => ['nullable', 'url', 'max:500'],

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBatchEventRequest;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
+use App\Http\Requests\UpdateEventSummaryRequest;
 use App\Models\Calendar;
 use App\Models\Event;
 use App\Notifications\EventNotification;
@@ -45,9 +46,10 @@ class EventController extends Controller
                 'creator_id' => $user->id,
                 'title' => $request->title,
                 'description' => $request->description,
+                'summary' => $request->summary,
                 'type' => $request->type,
                 'start_at' => $date['start_at'],
-                'end_at' => $date['end_at'],
+                'end_at' => $date['end_at'] ?? null,
                 'location' => $request->location,
                 'meeting_url' => $request->meeting_url,
             ]);
@@ -81,6 +83,7 @@ class EventController extends Controller
             'creator_id' => auth()->id(),
             'title' => $request->title,
             'description' => $request->description,
+            'summary' => $request->summary,
             'type' => $request->type,
             'start_at' => $request->start_at,
             'end_at' => $request->end_at,
@@ -108,6 +111,7 @@ class EventController extends Controller
             'calendar' => $calendar,
             'event' => $event,
             'userAttendance' => $userAttendance,
+            'canEditSummary' => auth()->check() && auth()->user()->can('updateSummary', $event),
         ]);
     }
 
@@ -128,6 +132,15 @@ class EventController extends Controller
         $event->update($request->validated());
 
         $this->notifyMembers($calendar, $event, 'updated');
+
+        return redirect()->route('events.show', [$calendar->uuid, $event->id]);
+    }
+
+    public function updateSummary(UpdateEventSummaryRequest $request, Calendar $calendar, Event $event)
+    {
+        $this->authorize('updateSummary', $event);
+
+        $event->update($request->validated());
 
         return redirect()->route('events.show', [$calendar->uuid, $event->id]);
     }

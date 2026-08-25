@@ -33,6 +33,17 @@ class EventPolicy
         return $event->creator_id === $user->id || $event->calendar->isOwnedBy($user);
     }
 
+    public function updateSummary(User $user, Event $event): bool
+    {
+        if ($this->update($user, $event)) {
+            return true;
+        }
+
+        return $event->attendees()
+            ->where('event_attendees.user_id', $user->id)
+            ->exists();
+    }
+
     public function delete(User $user, Event $event): bool
     {
         return $event->creator_id === $user->id || $event->calendar->isOwnedBy($user);
