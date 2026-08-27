@@ -329,7 +329,7 @@ export default function CalendarShow({
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Calendar Grid */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 min-w-0">
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
@@ -460,7 +460,7 @@ export default function CalendarShow({
                     </div>
 
                     {/* Upcoming Events Sidebar */}
-                    <div>
+                    <div className="min-w-0">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold">Próximos eventos</h2>
                             {filteredUpcomingEvents.length > 0 && (
