@@ -164,6 +164,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                             variant="ghost"
                                             size="sm"
                                             className="justify-start"
+                                            nativeButton={false}
                                             render={
                                                 <Link
                                                     href={link.href}

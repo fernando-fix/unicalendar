@@ -92,7 +92,7 @@ export default function Register() {
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 pb-5">
                             <Label htmlFor="password_confirmation">
                                 Confirm password
                             </Label>
