@@ -1,35 +1,49 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeftIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeftIcon, FileTextIcon } from 'lucide-react';
 import EventDatesField, { type DateSlot } from '@/components/event-dates-field';
+import { draftToFormValues as baseDraftToFormValues } from '@/lib/draft-form';
 import { EVENT_TYPES } from '@/types';
-import type { Calendar } from '@/types';
+import type { Calendar, EventDraft } from '@/types';
 
 type QuickCreateProps = {
     calendars: Calendar[];
     date?: string;
+    draft?: EventDraft | null;
 };
 
-export default function EventQuickCreate({ calendars, date }: QuickCreateProps) {
+function draftToFormValues(draft: EventDraft, date?: string) {
+    return {
+        calendar_id: String(draft.calendar_id),
+        ...baseDraftToFormValues(draft, date),
+    };
+}
+
+export default function EventQuickCreate({ calendars, date, draft }: QuickCreateProps) {
     const [multipleDates, setMultipleDates] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm({
-        calendar_id: calendars.length === 1 ? String(calendars[0].id) : '',
-        title: '',
-        description: '',
-        summary: '',
-        type: 'meeting',
-        start_at: date ? `${date}T09:00` : '',
-        end_at: date ? `${date}T10:00` : '',
-        location: '',
-        meeting_url: '',
-        dates: [{ start_at: date ? `${date}T09:00` : '', end_at: date ? `${date}T10:00` : '' }] as DateSlot[],
-    });
+    const defaults = draft
+        ? draftToFormValues(draft, date)
+        : {
+            calendar_id: calendars.length === 1 ? String(calendars[0].id) : '',
+            title: '',
+            description: '',
+            summary: '',
+            type: 'meeting' as const,
+            start_at: date ? `${date}T09:00` : '',
+            end_at: date ? `${date}T10:00` : '',
+            location: '',
+            meeting_url: '',
+            dates: [{ start_at: date ? `${date}T09:00` : '', end_at: date ? `${date}T10:00` : '' }] as DateSlot[],
+        };
+
+    const { data, setData, post, processing, errors } = useForm(defaults);
 
     const selectedCalendar = calendars.find((c) => c.id === Number(data.calendar_id));
 
@@ -42,6 +56,23 @@ export default function EventQuickCreate({ calendars, date }: QuickCreateProps) 
         } else {
             post(`/calendar/${selectedCalendar.uuid}/events`);
         }
+    }
+
+    function handleSaveAsDraft() {
+        if (!selectedCalendar) return;
+
+        router.post('/drafts', {
+            calendar_id: selectedCalendar.id,
+            title: data.title,
+            description: data.description,
+            summary: data.summary,
+            type: data.type,
+            start_at: data.start_at || null,
+            location: data.location,
+            meeting_url: data.meeting_url,
+        }, {
+            onSuccess: () => router.visit('/drafts'),
+        });
     }
 
     return (
@@ -57,7 +88,15 @@ export default function EventQuickCreate({ calendars, date }: QuickCreateProps) 
                     Voltar ao Dashboard
                 </Link>
 
-                <h1 className="text-2xl font-bold mb-6">Criar Evento</h1>
+                <div className="flex items-center justify-between gap-3 mb-6">
+                    <h1 className="text-2xl font-bold">Criar Evento</h1>
+                    {draft && (
+                        <Badge variant="secondary" className="gap-1">
+                            <FileTextIcon className="size-3" />
+                            De rascunho: {draft.title}
+                        </Badge>
+                    )}
+                </div>
 
                 {calendars.length === 0 ? (
                     <div className="rounded-lg border border-dashed p-8 text-center">
@@ -185,7 +224,7 @@ export default function EventQuickCreate({ calendars, date }: QuickCreateProps) 
                             )}
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-3">
                             <Button type="submit" disabled={processing || !data.calendar_id}>
                                 {processing
                                     ? 'Criando...'
@@ -195,7 +234,16 @@ export default function EventQuickCreate({ calendars, date }: QuickCreateProps) 
                                 }
                             </Button>
                             <Button
+                                type="button"
                                 variant="outline"
+                                onClick={handleSaveAsDraft}
+                                disabled={processing || !data.calendar_id || !data.title}
+                            >
+                                <FileTextIcon className="size-4" />
+                                Salvar como rascunho
+                            </Button>
+                            <Button
+                                variant="ghost"
                                 type="button"
                                 nativeButton={false}
                                 render={<Link href="/dashboard" />}

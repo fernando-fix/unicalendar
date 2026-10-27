@@ -23,20 +23,25 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $allCalendarsQuery = $user->calendarsOwned()
+        $allCalendars = $user->calendarsOwned()
             ->orWhereHas('members', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
-            });
+            })
+            ->withCount(['events as upcoming_events_count' => function ($query) {
+                $query->where('start_at', '>=', now());
+            }])
+            ->get()
+            ->values();
 
-        $allCalendars = $allCalendarsQuery->get()->values();
+        $allCalendarIds = $allCalendars->pluck('id');
+
         $allCalendarsWithColors = $allCalendars->map(function ($calendar, $index) {
             $calendar->color = self::CALENDAR_COLORS[$index % count(self::CALENDAR_COLORS)];
             $calendar->active = true;
+            $calendar->upcoming_events_count = (int) ($calendar->upcoming_events_count ?? 0);
 
             return $calendar;
         });
-
-        $allCalendarIds = $allCalendars->pluck('id');
 
         $allEvents = Event::query()
             ->whereIn('calendar_id', $allCalendarIds)

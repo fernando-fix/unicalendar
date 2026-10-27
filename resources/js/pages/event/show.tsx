@@ -20,6 +20,7 @@ import {
     XIcon,
     ChevronDownIcon,
     ChevronUpIcon,
+    FileTextIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Calendar, Event, Comment, SharedData } from '@/types';
@@ -178,6 +179,14 @@ export default function EventShow({ calendar, event, userAttendance, canEditSumm
                                     Editar
                                 </Button>
                                 <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.post(`/calendar/${calendar.uuid}/events/${event.id}/save-as-draft`)}
+                                >
+                                    <FileTextIcon className="size-4" />
+                                    Salvar como rascunho
+                                </Button>
+                                <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => {
@@ -187,6 +196,18 @@ export default function EventShow({ calendar, event, userAttendance, canEditSumm
                                     }}
                                 >
                                     <TrashIcon className="size-4" />
+                                </Button>
+                            </div>
+                        )}
+                        {auth.user && calendar.allow_member_event_creation && !(event.creator_id === auth.user.id || calendar.owner_id === auth.user.id) && (
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.post(`/calendar/${calendar.uuid}/events/${event.id}/save-as-draft`)}
+                                >
+                                    <FileTextIcon className="size-4" />
+                                    Salvar como rascunho
                                 </Button>
                             </div>
                         )}

@@ -1,34 +1,41 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import EventDatesField, { type DateSlot } from '@/components/event-dates-field';
-import { ArrowLeftIcon } from 'lucide-react';
+import { FileTextIcon } from 'lucide-react';
+import { draftToFormValues } from '@/lib/draft-form';
 import { EVENT_TYPES } from '@/types';
-import type { Calendar } from '@/types';
+import type { Calendar, EventDraft } from '@/types';
 
 type EventCreateProps = {
     calendar: Calendar;
     date?: string;
+    draft?: EventDraft | null;
 };
 
-export default function EventCreate({ calendar, date }: EventCreateProps) {
+export default function EventCreate({ calendar, date, draft }: EventCreateProps) {
     const [multipleDates, setMultipleDates] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm({
-        title: '',
-        description: '',
-        summary: '',
-        type: 'meeting',
-        start_at: date ? `${date}T09:00` : '',
-        end_at: date ? `${date}T10:00` : '',
-        location: '',
-        meeting_url: '',
-        dates: [{ start_at: date ? `${date}T09:00` : '', end_at: date ? `${date}T10:00` : '' }] as DateSlot[],
-    });
+    const defaults = draft
+        ? draftToFormValues(draft, date)
+        : {
+            title: '',
+            description: '',
+            summary: '',
+            type: 'meeting' as const,
+            start_at: date ? `${date}T09:00` : '',
+            end_at: date ? `${date}T10:00` : '',
+            location: '',
+            meeting_url: '',
+            dates: [{ start_at: date ? `${date}T09:00` : '', end_at: date ? `${date}T10:00` : '' }] as DateSlot[],
+        };
+
+    const { data, setData, post, processing, errors } = useForm(defaults);
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -38,6 +45,23 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
         } else {
             post(`/calendar/${calendar.uuid}/events`);
         }
+    }
+
+    function handleSaveAsDraft() {
+        const payload = {
+            calendar_id: calendar.id,
+            title: data.title,
+            description: data.description,
+            summary: data.summary,
+            type: data.type,
+            start_at: data.start_at || null,
+            location: data.location,
+            meeting_url: data.meeting_url,
+        };
+
+        router.post('/drafts', payload, {
+            onSuccess: () => router.visit('/drafts'),
+        });
     }
 
     return (
@@ -53,7 +77,15 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
                     <span>Criar Evento</span>
                 </nav>
 
-                <h1 className="text-2xl font-bold mb-6">Criar Evento</h1>
+                <div className="flex items-center justify-between gap-3 mb-6">
+                    <h1 className="text-2xl font-bold">Criar Evento</h1>
+                    {draft && (
+                        <Badge variant="secondary" className="gap-1">
+                            <FileTextIcon className="size-3" />
+                            De rascunho: {draft.title}
+                        </Badge>
+                    )}
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
@@ -150,12 +182,21 @@ export default function EventCreate({ calendar, date }: EventCreateProps) {
                         )}
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                         <Button type="submit" disabled={processing}>
                             {processing ? 'Criando...' : 'Criar Evento'}
                         </Button>
                         <Button
+                            type="button"
                             variant="outline"
+                            onClick={handleSaveAsDraft}
+                            disabled={processing || !data.title}
+                        >
+                            <FileTextIcon className="size-4" />
+                            Salvar como rascunho
+                        </Button>
+                        <Button
+                            variant="ghost"
                             type="button"
                             nativeButton={false}
                             render={<Link href={`/calendar/${calendar.uuid}`} />}

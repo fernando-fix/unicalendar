@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateEventRequest;
 use App\Http\Requests\UpdateEventSummaryRequest;
 use App\Models\Calendar;
 use App\Models\Event;
+use App\Models\EventDraft;
 use App\Notifications\EventNotification;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
@@ -31,6 +32,7 @@ class EventController extends Controller
         return Inertia::render('event/quick-create', [
             'calendars' => $calendars,
             'date' => request()->query('date'),
+            'draft' => $this->resolveDraft(request()->integer('from_draft'), $user->id),
         ]);
     }
 
@@ -72,6 +74,7 @@ class EventController extends Controller
         return Inertia::render('event/create', [
             'calendar' => $calendar,
             'date' => request()->query('date'),
+            'draft' => $this->resolveDraft(request()->integer('from_draft'), auth()->id()),
         ]);
     }
 
@@ -156,6 +159,27 @@ class EventController extends Controller
         return redirect()->route('calendars.show', $calendar->uuid);
     }
 
+    public function saveAsDraft(Calendar $calendar, Event $event)
+    {
+        $this->authorize('create', [EventDraft::class, $calendar]);
+
+        EventDraft::create([
+            'calendar_id' => $calendar->id,
+            'creator_id' => auth()->id(),
+            'title' => $event->title,
+            'description' => $event->description,
+            'summary' => $event->summary,
+            'type' => $event->type,
+            'start_at' => null,
+            'location' => $event->location,
+            'meeting_url' => $event->meeting_url,
+        ]);
+
+        return redirect()
+            ->route('drafts.index')
+            ->with('success', 'Rascunho criado a partir deste evento.');
+    }
+
     private function notifyMembers(Calendar $calendar, Event $event, string $action): void
     {
         $members = $calendar->members()->get();
@@ -182,5 +206,19 @@ class EventController extends Controller
                 Notification::send($member, new EventNotification($event, $action));
             }
         }
+    }
+
+    private function resolveDraft(int $draftId, int $userId): ?EventDraft
+    {
+        if ($draftId <= 0) {
+            return null;
+        }
+
+        $draft = EventDraft::query()
+            ->where('id', $draftId)
+            ->where('creator_id', $userId)
+            ->first();
+
+        return $draft;
     }
 }

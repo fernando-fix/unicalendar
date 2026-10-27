@@ -29,6 +29,7 @@ import {
     LayoutDashboardIcon,
     CalendarIcon,
     UserIcon,
+    FileTextIcon,
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboardIcon },
         { href: '/calendars', label: 'Calendários', icon: CalendarIcon },
+        { href: '/drafts', label: 'Rascunhos', icon: FileTextIcon },
         { href: '/settings/profile', label: 'Perfil', icon: UserIcon },
         { href: '/settings', label: 'Settings', icon: SettingsIcon },
     ];

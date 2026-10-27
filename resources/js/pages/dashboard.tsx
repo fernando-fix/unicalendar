@@ -9,6 +9,7 @@ import {
     CardTitle,
     CardContent,
 } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     PlusIcon,
     CalendarClockIcon,
@@ -23,7 +24,7 @@ type DashboardProps = {
     memberCalendars: Calendar[];
     upcomingEvents: Event[];
     allEvents: Event[];
-    allCalendars: (Calendar & { color: string; active: boolean })[];
+    allCalendars: (Calendar & { color: string; active: boolean; upcoming_events_count: number })[];
 };
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -117,6 +118,95 @@ function EventListItem({ event }: { event: Event }) {
                 </div>
             )}
         </Link>
+    );
+}
+
+function CalendarList({
+    calendars,
+    activeCalendars,
+    onToggle,
+}: {
+    calendars: DashboardProps['allCalendars'];
+    activeCalendars: Record<number, boolean>;
+    onToggle: (id: number) => void;
+}) {
+    type TabValue = 'with_events' | 'without_events';
+    const [activeTab, setActiveTab] = useState<TabValue>('with_events');
+
+    const withEvents = useMemo(
+        () => calendars.filter((cal) => (cal.upcoming_events_count ?? 0) > 0),
+        [calendars],
+    );
+    const withoutEvents = useMemo(
+        () => calendars.filter((cal) => (cal.upcoming_events_count ?? 0) === 0),
+        [calendars],
+    );
+
+    function renderList(items: typeof calendars) {
+        if (items.length === 0) {
+            return (
+                <p className="text-sm text-muted-foreground p-2">
+                    {activeTab === 'with_events'
+                        ? 'Nenhum calendário com eventos futuros.'
+                        : 'Nenhum calendário vazio.'}
+                </p>
+            );
+        }
+
+        return (
+            <div className="space-y-2">
+                {items.map((cal) => {
+                    const isEmpty = (cal.upcoming_events_count ?? 0) === 0;
+                    return (
+                        <label
+                            key={cal.id}
+                            className="flex items-center gap-2 cursor-pointer rounded-lg border p-2 transition-colors hover:bg-muted/50"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={activeCalendars[cal.id] ?? true}
+                                onChange={() => onToggle(cal.id)}
+                                className="size-4 rounded border-gray-300"
+                            />
+                            <span className={`size-3 rounded-full ${CALENDAR_DOT_COLORS[cal.color] ?? 'bg-gray-500'}`} />
+                            <Link
+                                href={`/calendar/${cal.uuid}`}
+                                className={`text-sm font-medium hover:underline truncate ${isEmpty ? 'text-muted-foreground' : ''}`}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {cal.name}
+                            </Link>
+                            {(cal.upcoming_events_count ?? 0) > 0 && (
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                    {cal.upcoming_events_count}
+                                </Badge>
+                            )}
+                        </label>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <Tabs
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as TabValue)}
+            >
+                <TabsList className="w-full">
+                    <TabsTrigger value="with_events">
+                        Com eventos ({withEvents.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="without_events">
+                        Sem eventos ({withoutEvents.length})
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <div className="mt-3">
+                {renderList(activeTab === 'with_events' ? withEvents : withoutEvents)}
+            </div>
+        </>
     );
 }
 
@@ -341,29 +431,11 @@ export default function Dashboard({
                     {/* Sidebar */}
                     <div>
                         <h2 className="text-lg font-semibold mb-4">Calendários</h2>
-                        <div className="space-y-2">
-                            {allCalendars.map((cal) => (
-                                <label
-                                    key={cal.id}
-                                    className="flex items-center gap-2 cursor-pointer rounded-lg border p-2 transition-colors hover:bg-muted/50"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={activeCalendars[cal.id] ?? true}
-                                        onChange={() => toggleCalendar(cal.id)}
-                                        className="size-4 rounded border-gray-300"
-                                    />
-                                    <span className={`size-3 rounded-full ${CALENDAR_DOT_COLORS[cal.color] ?? 'bg-gray-500'}`} />
-                                    <Link
-                                        href={`/calendar/${cal.uuid}`}
-                                        className="text-sm font-medium hover:underline truncate"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        {cal.name}
-                                    </Link>
-                                </label>
-                            ))}
-                        </div>
+                        <CalendarList
+                            calendars={allCalendars}
+                            activeCalendars={activeCalendars}
+                            onToggle={toggleCalendar}
+                        />
                     </div>
                 </div>
             )}

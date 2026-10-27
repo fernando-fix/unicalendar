@@ -107,6 +107,22 @@ export const EVENT_TYPES = {
 
 export type EventTypeKey = keyof typeof EVENT_TYPES;
 
+export type EventDraft = {
+    id: number;
+    calendar_id: number;
+    creator_id: number;
+    title: string;
+    description: string | null;
+    summary: string | null;
+    type: 'meeting' | 'deadline' | 'exam' | 'presentation' | 'event' | 'other';
+    start_at: string | null;
+    location: string | null;
+    meeting_url: string | null;
+    created_at: string;
+    updated_at: string;
+    calendar?: Pick<Calendar, 'id' | 'uuid' | 'name'>;
+};
+
 export type PageProps<T = Record<string, unknown>> = T & {
     auth: {
         user: User;

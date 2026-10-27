@@ -11,9 +11,11 @@ use App\Http\Controllers\CalendarSettingsController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventDraftController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -84,6 +86,17 @@ Route::middleware('auth')->group(function () {
     Route::put('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'update'])->name('events.update');
     Route::put('/calendar/{calendar:uuid}/events/{event}/summary', [EventController::class, 'updateSummary'])->name('events.update-summary');
     Route::delete('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
+    Route::post('/calendar/{calendar:uuid}/events/{event}/save-as-draft', [EventController::class, 'saveAsDraft'])->name('events.save-as-draft');
+});
+
+// Draft routes
+Route::middleware('auth')->group(function () {
+    Route::get('/drafts', [EventDraftController::class, 'index'])->name('drafts.index');
+    Route::get('/drafts/create', [EventDraftController::class, 'create'])->name('drafts.create');
+    Route::post('/drafts', [EventDraftController::class, 'store'])->name('drafts.store');
+    Route::get('/drafts/{draft}/edit', [EventDraftController::class, 'edit'])->name('drafts.edit');
+    Route::put('/drafts/{draft}', [EventDraftController::class, 'update'])->name('drafts.update');
+    Route::delete('/drafts/{draft}', [EventDraftController::class, 'destroy'])->name('drafts.destroy');
 });
 
 Route::get('/calendar/{calendar:uuid}/events/{event}', [EventController::class, 'show'])->name('events.show');
@@ -98,3 +111,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/calendar/{calendar:uuid}/events/{event}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/calendar/{calendar:uuid}/events/{event}/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 });
+
+// Maintenance route (shared hosting / no CLI access). Disabled when SETUP_TOKEN is empty.
+Route::get('/setup/{token}', [SetupController::class, 'run'])->name('setup.run');

@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Models\Calendar;
 use App\Models\Comment;
 use App\Models\Event;
+use App\Models\EventDraft;
 use App\Policies\CalendarPolicy;
 use App\Policies\CommentPolicy;
+use App\Policies\EventDraftPolicy;
 use App\Policies\EventPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -39,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Calendar::class, CalendarPolicy::class);
         Gate::policy(Event::class, EventPolicy::class);
         Gate::policy(Comment::class, CommentPolicy::class);
+        Gate::policy(EventDraft::class, EventDraftPolicy::class);
     }
 
     /**

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     CalendarIcon,
     PlusIcon,
@@ -300,32 +301,20 @@ export default function CalendarShow({
                     </Card>
                 ) : (
                 <>
-                {/* Filter Chips */}
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        onClick={() => handleTypeFilter(null)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                            typeFilter === null
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        }`}
-                    >
-                        Todos
-                    </button>
-                    {EVENT_TYPES.map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => handleTypeFilter(typeFilter === type ? null : type)}
-                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                                typeFilter === type
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                        >
-                            {TYPE_LABELS[type]}
-                        </button>
-                    ))}
-                </div>
+                {/* Type Filter Tabs */}
+                <Tabs
+                    value={typeFilter ?? 'all'}
+                    onValueChange={(value) => handleTypeFilter(value === 'all' ? null : value)}
+                >
+                    <TabsList>
+                        <TabsTrigger value="all">Todos</TabsTrigger>
+                        {EVENT_TYPES.map((type) => (
+                            <TabsTrigger key={type} value={type}>
+                                {TYPE_LABELS[type]}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                </Tabs>
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Calendar Grid */}
